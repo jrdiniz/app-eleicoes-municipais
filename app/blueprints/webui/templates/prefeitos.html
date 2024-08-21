@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <h1>Prefeitos</h1>
+
+    <div class="row">
+        <div class="col">
+            <select class="form-select" name="" id="">
+                {% for municipio in municipios %}
+                    <option value="{{ municipio }}">{{ municipio }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col">
+            <select class="form-select" name="" id="">
+                {% for estado in estados %}
+                    <option value="{{ estado }}">{{ estado }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col">
+            <select class="form-select" name="" id="">
+                {% for partido in partidos %}
+                    <option value="{{ partido }}">{{ partido }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col">
+            <button class="btn btn-primary">Filtrar</button>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <th>ID</th>
+            <th>Nome Completo</th>
+            <th>Sigla Partido</th>
+            <th>Número</th>
+            <th>Município</th>
+            <th>UF</th>
+        </thead>
+        <tbody>
+            {% for prefeito in prefeitos %}
+            <tr>
+                <td>{{ prefeito.sq_candidato }}</td>
+                <td>{{ prefeito.nm_urna_candidato }}</td>
+                <td>{{ prefeito.sg_partido }}</td>
+                <td>{{ prefeito.nr_candidato }}</td>
+                <td>{{ prefeito.nm_ue }}</td>
+                <td>{{ prefeito.sg_uf }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

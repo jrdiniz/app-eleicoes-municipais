@@ -3,6 +3,8 @@ from flask import Flask
 
 # Extensions
 from app.extensions import configurations
+from app.extensions import database
+from app.extensions import command
 
 # Blueprints
 from app.blueprints import webui
@@ -13,7 +15,9 @@ def create_app():
 
     # Initialize Extensions
     configurations.init_app(app)
-
+    database.init_app(app)
+    command.init_app(app)
+    
     # Initialize Blueprints
     webui.init_app(app)
 
