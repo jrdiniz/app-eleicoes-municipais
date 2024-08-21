@@ -1,0 +1,85 @@
+---
+- name: Playbook to deploy flask bolierplate
+  hosts: 127.0.0.1
+  connection: local
+  
+  vars:
+    application_user: ''
+    application_group: ''
+    application_logfile: ''
+    application_path: ''
+
+  tasks:
+  - name: Create application user
+    user:
+      name: '{{ application_user }}'
+      comment: Application User
+      group: '{{application_group}}'
+      shell: /bin/bash
+      state: present
+      home: '{{ application_path }}/{{ application_user }}'
+
+  - name: Create public_html directory
+    file:
+      path: '{{ application_path }}/{{ application_user }}/public_html'
+      state: directory
+      owner: '{{ application_user }}'
+      group: '{{application_group}}'
+      mode: 0755
+
+  - name: Create logfile
+    file:
+      path: '{{ application_path }}/{{ application_user }}/public_html/{{ application_logfile }}'
+      state: touch
+      owner: '{{ application_user }}'
+      group: '{{application_group}}'
+      mode: 0644
+
+  - name: Copy Application Source
+    copy:
+      src: ./app
+      dest: '{{ application_path }}/{{ application_user }}/public_html/'
+      remote_src: yes
+      owner: '{{ application_user }}'
+      group: '{{application_group}}'
+
+  - name: Copy requirements.txt
+    copy:
+      src: ./requirements.txt
+      dest: '{{ application_path }}/{{ application_user }}/public_html/'
+      remote_src: yes
+      owner: '{{ application_user }}'
+      group: '{{application_group}}'
+
+  - name: Copy WSGI
+    copy:
+      src: ./wsgi.py
+      dest: '{{ application_path }}/{{ application_user }}/public_html/'
+      remote_src: yes
+      owner: '{{ application_user }}'
+      group: '{{application_group}}'
+
+  - name: Configuration file
+    copy:
+      src: ./config.py
+      dest: '{{ application_path }}/{{ application_user }}/public_html/'
+      remote_src: yes
+      owner: '{{ application_user }}'
+      group: '{{application_group}}'
+
+  - name: .env file
+    copy:
+      dest: '{{ application_path }}/{{ application_user }}/public_html/.env'
+      owner: '{{ application_user }}'
+      group: '{{application_group}}'
+      content: |
+        FLASK_APP=opentraining
+        FLASK_ENV=production
+        FLASK_CONFIG_FILE=config.ProductionConfig
+        SECRET_KEY=<your-secret-key>
+
+  - name: Create python virtualenv and install requirements
+    pip:
+      virtualenv_command: /usr/bin/python3 -m venv
+      virtualenv: '{{ application_path }}/{{ application_user }}/public_html/env'
+      requirements: '{{ application_path }}/{{ application_user }}/public_html/requirements.txt'
