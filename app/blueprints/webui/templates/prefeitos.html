@@ -2,55 +2,25 @@
 {% block content %}
 <div class="container">
     <h1>Prefeitos</h1>
+    <form hx-post="{{ url_for('webui.filtro_prefeitos_por_estado_municipio')}}" hx-target="#filtro-prefeitos" hx-swap="innerHTML">
+        <div class="row">
+            <div class="col">
+                <select class="form-select" name="sg_uf" id="sg_uf" hx-get="{{ url_for('webui.filtro_municipios_por_estado')}}" hx-target="#nm_ue" hx-swap="innerHTML" htx>
+                    {% for estado in estados %}
+                        <option value="{{ estado }}">{{ estado }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col" id="nm_ue">
+                
+            </div>
+            <div class="col">
+                <button type="submit" class="btn btn-primary" >Filtrar</button>
+            </div>
+        </div>
+    </form>
+    <div class="row" id="filtro-prefeitos">
 
-    <div class="row">
-        <div class="col">
-            <select class="form-select" name="" id="">
-                {% for municipio in municipios %}
-                    <option value="{{ municipio }}">{{ municipio }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col">
-            <select class="form-select" name="" id="">
-                {% for estado in estados %}
-                    <option value="{{ estado }}">{{ estado }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col">
-            <select class="form-select" name="" id="">
-                {% for partido in partidos %}
-                    <option value="{{ partido }}">{{ partido }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col">
-            <button class="btn btn-primary">Filtrar</button>
-        </div>
     </div>
-
-    <table>
-        <thead>
-            <th>ID</th>
-            <th>Nome Completo</th>
-            <th>Sigla Partido</th>
-            <th>Número</th>
-            <th>Município</th>
-            <th>UF</th>
-        </thead>
-        <tbody>
-            {% for prefeito in prefeitos %}
-            <tr>
-                <td>{{ prefeito.sq_candidato }}</td>
-                <td>{{ prefeito.nm_urna_candidato }}</td>
-                <td>{{ prefeito.sg_partido }}</td>
-                <td>{{ prefeito.nr_candidato }}</td>
-                <td>{{ prefeito.nm_ue }}</td>
-                <td>{{ prefeito.sg_uf }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
 </div>
 {% endblock %}

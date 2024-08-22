@@ -1,0 +1,29 @@
+<div class="col-sm-12">
+    <table>
+        <thead>
+            <th>ID</th>
+            <th>Nome Completo</th>
+            <th>Sigla Partido</th>
+            <th>Número</th>
+            <th>Município</th>
+            <th>UF</th>
+            <th></th>
+        </thead>
+        <tbody>
+            {% for prefeito in prefeitos %}
+            <tr>
+                <td><img src="{{ url_for('static', filename='fotos_candidatos_prefeito/' )}}{{prefeito.ft_candidato }}" alt="" srcset=""></td>
+                <td>{{ prefeito.nm_urna_candidato }}</td>
+                <td>{{ prefeito.sg_partido }}</td>
+                <td>{{ prefeito.nr_candidato }}</td>
+                <td>{{ prefeito.nm_ue }}</td>
+                <td>{{ prefeito.sg_uf }}</td>
+                <td>
+                    <button class="btn btn-sm btn-dark"><i class="bi bi-filetype-json"></i></button>
+                    <button class="btn btn-sm btn-danger"><i class="bi bi-youtube"></i></button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

@@ -3,6 +3,8 @@ from flask import Blueprint
 # Import routes
 from .webui import index
 from .webui import prefeitos
+from .webui import filtro_prefeitos_por_estado_municipio
+from .webui import filtro_municipios_por_estado
 
 # Register blueprints
 bp = Blueprint("webui", __name__, template_folder="templates", static_folder="static")
@@ -14,6 +16,14 @@ bp.add_url_rule("/", view_func=index)
 # Prefeitos route
 prefeitos.methods = ["GET"]
 bp.add_url_rule("/prefeitos", view_func=prefeitos)
+
+# Filtrar route
+filtro_prefeitos_por_estado_municipio.methods = ["POST"]
+bp.add_url_rule("/prefeitos/filtros", view_func=filtro_prefeitos_por_estado_municipio)
+
+# Filtrar Municipios por Estado
+filtro_municipios_por_estado.methods = ["GET"]
+bp.add_url_rule("/municipios", view_func=filtro_municipios_por_estado)
 
 
 def init_app(app):

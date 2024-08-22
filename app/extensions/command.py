@@ -1,6 +1,8 @@
 import click
 import os
 import csv
+import re
+import shutil
 
 import pandas as pd
 
@@ -44,3 +46,24 @@ def init_app(app):
                 db.session.rollback()
                 print(f"Candidato {prefeito['NM_URNA_CANDIDATO']} já existe no banco de dados.")
                 
+                
+                
+    @app.cli.command()
+    def import_candidatos_fotos():
+        fotos_file_path = "/home/juliano/apps/app-eleicoes-municipais/fotos/foto_cand2024_AL_div/"
+        fotos_file_static = "/home/juliano/apps/app-eleicoes-municipais/app/static/fotos_candidatos_prefeito/"
+        for foto_file in os.listdir(fotos_file_path):
+            if foto_file.endswith(('.jpeg','jpg')):
+                # Regex para extrair o número do candidato do nome do arquivo da foto
+                match = re.search(r'FAL(\d+)_div', foto_file)
+                if match:
+                    sq_candidato = str(match.group(1)).strip()
+                    print(sq_candidato)
+                    candidato = Candidato.query.filter_by(sq_candidato=sq_candidato).first()
+                    if candidato:
+                        candidato.ft_candidato = foto_file.strip() 
+                        db.session.commit()
+                        # copia a foto para a pasta static de candidatos
+                        shutil.copy(fotos_file_path + foto_file, fotos_file_static + foto_file)
+                        print(f"Foto do candidato importada com sucesso.")
+        

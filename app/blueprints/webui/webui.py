@@ -1,4 +1,5 @@
 from flask import Flask
+from flask import request
 from flask import render_template
 
 from app.blueprints.models import Candidato
@@ -17,8 +18,20 @@ def prefeitos():
     estados = db.session.query(Candidato.sg_uf).order_by(Candidato.sg_uf.asc()).distinct().all()
     estados = [estado[0] for estado in estados]
     
-    partidos = db.session.query(Candidato.sg_partido).order_by(Candidato.sg_partido.asc()).distinct().all()
-    partidos = [partido[0] for partido in partidos]
+    return render_template("prefeitos.html", municipios=municipios, estados=estados)
+
+
+def filtro_prefeitos_por_estado_municipio(): 
+    if request.method == "POST":    
+        nm_ue = request.form.get("nm_ue")
+        sg_uf = request.form.get("sg_uf")
     
-    prefeitos = Candidato.query.filter_by(ds_cargo="PREFEITO").all()
-    return render_template("prefeitos.html", prefeitos=prefeitos, municipios=municipios, estados=estados, partidos=partidos)
+        prefeitos = Candidato.query.filter_by(nm_ue=nm_ue, sg_uf=sg_uf).all()
+        return render_template("partials/_filtro_prefeito_municipio_estado.html", prefeitos=prefeitos)
+    
+    
+def filtro_municipios_por_estado():
+    sg_uf = request.args.get('sg_uf')
+    municipios = db.session.query(Candidato.nm_ue).filter(Candidato.sg_uf==sg_uf).order_by(Candidato.nm_ue.asc()).distinct().all()
+    municipios = [municipio[0] for municipio in municipios]
+    return render_template("partials/_filtro_municipios_por_estado.html", municipios=municipios)

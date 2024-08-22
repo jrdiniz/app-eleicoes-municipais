@@ -32,8 +32,11 @@ class Candidato(db.Model):
     
     # Descrição do cargo ao qual a candidata ou candidato concorre.
     ds_cargo = db.Column(db.String(100), nullable=False)
+    
+    # Nome do arquivos de foto
+    ft_candidato = db.Column(db.String(255), nullable=True, default=None) 
  
-    def __init__(self, sq_canditato, nr_candidato, nm_urna_candidato, sg_uf, nm_ue, nr_partido, sg_partido, nm_partido, ds_cargo):
+    def __init__(self, sq_canditato, nr_candidato, nm_urna_candidato, sg_uf, nm_ue, nr_partido, sg_partido, nm_partido, ds_cargo, ft_candidato):
         self.sq_candidato = sq_canditato
         self.nr_candidato = nr_candidato
         self.nm_urna_candidato = nm_urna_candidato
@@ -43,4 +46,5 @@ class Candidato(db.Model):
         self.sg_partido = sg_partido
         self.nm_partido = nm_partido
         self.ds_cargo = ds_cargo
+        self.ft_candidato = ft_candidato
     
