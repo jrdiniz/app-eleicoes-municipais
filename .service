@@ -1,0 +1,14 @@
+[Unit]
+Description=Eleicoes - v0.1
+After=network.target
+
+[Service]
+User={{ application_user }}
+Group=webpoint
+WorkingDirectory={{ application_path }}/{{ application_user }}/public_html/
+ExecStart={{ application_path }}/{{ application_user }}/public_html/env/bin/gunicorn -c gunicorn.conf.py wsgi:app
+Restart=always
+Type=simple
+
+[Install]
+WantedBy=multi-user.target
