@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-sm-12">
+            <h1>Eleições Municipais em {{ nm_ue}} ({{ sg_uf }}): Veja como foi a votação no 1º turno</h1>
+            <small>Saiba como os eleitores do município votaram para prefeitura de {{ nm_ue }}.</small>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <p>{{ nm_ue}} ({{ sg_uf }}) definiu os votos para prefeito e vereadores no primeiro turno das Eleições Municipais de 2024, realizado no domingo, 6 de outubro.</p>
+
+
+            <!-- Primeiro Turno -->
+            <p>No municipio de {{ nm_ue}} ({{ sg_uf }}) não haverá segundo turno, já que o candidato [Nome do Candidato] ([Sigla do Partido]) teve [XX%] dos votos, ou seja mais de 50% + 1 voto do total de eleitores que votaram nas eleições múnicipiais de 2024.</p>
+            
+            <!-- Segundo Turno -->
+
+            <p>Veja abaixo como cada candidato a prefeitura de {{ nm_ue}} ({{ sg_uf }}) saiu:</p>
+
+            <ul>
+                <li>Candidato Fulano (Sigla do Partido): 1000 votos (52,99%)</li>
+                <li>Candidato Fulano (Sigla do Partido): 1000 votos (52,99%)</li>
+                <li>Candidato Fulano (Sigla do Partido): 1000 votos (52,99%)</li>
+                <li>Candidato Fulano (Sigla do Partido): 1000 votos (52,99%)</li>
+                <li>Candidato Fulano (Sigla do Partido): 1000 votos (52,99%)</li>
+                <li>Candidato Fulano (Sigla do Partido): 1000 votos (52,99%)</li>
+            </ul>
+
+            
+        </div>
+    </div>
+    
+</div>
+{% endblock %}

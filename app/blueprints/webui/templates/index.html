@@ -1,6 +1,45 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container">
-    <h1>Flask Bolierplate - Webui Blueprint</h1>
+    <div class="row">
+        <div class="col-sm-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                  <li class="breadcrumb-item"><a href="{{ url_for('webui.index')}}">Home</a></li>
+                </ol>
+            </nav>
+        </div>
+        <div class="col-sm-12">
+            <h1>Municipios com mais de 200 mil eleitores</h1>
+        </div> 
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <table class="table">
+                <thead>
+                    <th>Estado</th>
+                    <th>Município</th>
+                    <th>Todal de Candidatos</th>
+                    <th>Total de Eleitores</th>
+                    <th>Abstenções</th>
+                    <th>Brancos e Nulos</th>
+                    <th></th>
+                </thead>
+                <tbody>
+                    {% for municipio in municipios %}
+                    <tr>
+                        <td>{{ municipio.sg_uf }}</td>
+                        <td>{{ municipio.nm_ue.title() }}</td>
+                        <td>{{ municipio.nm_candidatos }}</td>
+                        <td>{{ municipio.nm_eleitores }}</td>
+                        <td>{{ municipio.nm_abstencoes }}</td>
+                        <td>{{ municipio.nm_nulos_brancos }}</td>
+                        <td><a href="{{ url_for('webui.candidatos', municipio_id = municipio.id)}}" class="btn btn-primary">Candidatos</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 {% endblock %}

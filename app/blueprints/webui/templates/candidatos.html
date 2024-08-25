@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-sm-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                  <li class="breadcrumb-item"><a href="{{ url_for('webui.index')}}">Home</a></li>
+                  <li class="breadcrumb-item active" aria-current="page">Candidatos do Município de {{ municipio.nm_ue.title() }}</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="col-sm-12">
+            <h1>Candidatos do Municipio de {{ municipio.nm_ue.title() }} - {{ municipio.sg_uf }}</h1>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <table class="table">
+                <thead>
+                    <th>Foto</th>
+                    <th>Nome do Candidato</th>
+                    <th>Número na Urna</th>
+                    <th>Sigla do Partido</th>
+                    <th>Nome do Partido</th>
+                </thead>
+                <tbody>
+                    {% for candidato in candidatos %}
+                    <tr>
+                        <td><img src="{{ url_for('static', filename='fotos' )}}/{{candidato.ft_candidato }}" alt="" srcset=""></td>
+                        <td>{{ candidato.nm_urna_candidato.title() }}</td>
+                        <td>{{ candidato.nr_partido }}</td>
+                        <td>{{ candidato.sg_partido }}</td>
+                        <td>{{ candidato.nm_partido.title() }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
