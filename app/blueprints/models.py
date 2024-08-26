@@ -20,18 +20,22 @@ class Municipio(db.Model):
     # Nome da unidade eleitoral da candidata ou candidato. Em caso de abrangência nacional, é igual a "Brasil". Em caso de abrangência estadual, é o nome da UF em que a candidata ou candidato concorre. Em caso de abrangência municipal, é o nome do município em que a candidata ou candidato concorre.
     nm_ue = db.Column(db.String(255), nullable=False)
     nm_eleitores = db.Column(db.Integer, nullable=False)
-    nm_nulos_brancos = db.Column(db.Integer, nullable=False, default=0)
+    nm_nulos = db.Column(db.Integer, nullable=False, default=0)
+    nm_brancos = db.Column(db.Integer, nullable=False, default=0)
     nm_abstencoes = db.Column(db.Integer, nullable=False, default=0)
+    status_apuracao = db.Column(db.Boolean, nullable=False, default=False)
 
     # Relacionamento Um-Para-Muitos
     candidatos = db.relationship("Candidato", backref="municipio", lazy=True)
 
-    def __init__(self, sg_uf, nm_ue, nm_eleitores, nm_nulos_brancos, nm_abstencoes):
+    def __init__(self, sg_uf, nm_ue, nm_eleitores, nm_nulos, nm_brancos, nm_abstencoes, status_apuracao):
         self.sg_uf = sg_uf
         self.nm_ue = nm_ue
         self.nm_eleitores = nm_eleitores
-        self.nm_nulos_brancos = nm_nulos_brancos
+        self.nm_nulos = nm_nulos
+        self.nm_brancos = nm_brancos
         self.nm_abstencoes = nm_abstencoes
+        self.status_apuracao = status_apuracao
 
 
 class Candidato(db.Model):

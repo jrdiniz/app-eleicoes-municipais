@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container">
-    <div class="row">
+    <div class="row py-4">
         <div class="col-sm-12">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
@@ -14,6 +14,13 @@
         </div> 
     </div>
     <div class="row">
+        <div class="row align-items-center py-1">
+            <div class="col-sm-6">
+                <a href="{{ url_for('webui.export_to_csv')}}" class="btn btn-primary">Exportar CSV</a>
+            </div>
+        </div>
+    </div>
+    <div class="row">
         <div class="col-sm-12">
             <table class="table">
                 <thead>
@@ -21,8 +28,7 @@
                     <th>Município</th>
                     <th>Todal de Candidatos</th>
                     <th>Total de Eleitores</th>
-                    <th>Abstenções</th>
-                    <th>Brancos e Nulos</th>
+                    <th>Status Apuração</th>
                     <th></th>
                 </thead>
                 <tbody>
@@ -32,8 +38,14 @@
                         <td>{{ municipio.nm_ue.title() }}</td>
                         <td>{{ municipio.nm_candidatos }}</td>
                         <td>{{ municipio.nm_eleitores }}</td>
-                        <td>{{ municipio.nm_abstencoes }}</td>
-                        <td>{{ municipio.nm_nulos_brancos }}</td>
+                        <td>
+                            {% if municipio.status_apuracao == True %}
+                            <span class="badge text-bg-success">Finalizada</span>
+                            {% else %}
+                            <span class="badge text-bg-danger">Em Andamento</span>
+                            {% endif %}
+                        
+                        </td>
                         <td><a href="{{ url_for('webui.candidatos', municipio_id = municipio.id)}}" class="btn btn-primary">Candidatos</a></td>
                     </tr>
                     {% endfor %}

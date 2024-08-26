@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container">
-    <div class="row">
+    <div class="row py-4">
         <div class="col-sm-12">
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
@@ -14,6 +14,24 @@
             <h1>Candidatos do Municipio de {{ municipio.nm_ue.title() }} - {{ municipio.sg_uf }}</h1>
         </div>
     </div>
+    <hr>
+    <div class="row align-items-center py-1">
+        <div class="col-sm-2">
+            <label for=""><span class="fw-bold">Votos Nulos:</span> {{ municipio.nm_nulos}}</label>        
+        </div>
+        <div class="col-sm-2">
+            <label for=""><span class="fw-bold">Votos Brancos:</span> {{ municipio.nm_brancos}}</label>        
+        </div>
+        <div class="col-sm-2">
+            <label for=""><span class="fw-bold">Abstenções:</span> {{ municipio.nm_abstencoes}}</label>        
+        </div>
+        <div class="col-sm-6">
+            <button class="btn btn-primary">Gerar Vídeo</button>
+            <button class="btn btn-primary">Gerar Artigo</button>
+            <button class="btn btn-primary">Exportar</button>
+        </div>
+    </div>
+    <hr>
     <div class="row">
         <div class="col-sm-12">
             <table class="table">
@@ -23,6 +41,8 @@
                     <th>Número na Urna</th>
                     <th>Sigla do Partido</th>
                     <th>Nome do Partido</th>
+                    <th>Total de Votos</th>
+                    <th>%</th>
                 </thead>
                 <tbody>
                     {% for candidato in candidatos %}
@@ -32,6 +52,8 @@
                         <td>{{ candidato.nr_partido }}</td>
                         <td>{{ candidato.sg_partido }}</td>
                         <td>{{ candidato.nm_partido.title() }}</td>
+                        <td>{{ candidato.nr_votos }}</td>
+                        <td>{{ candidato.nr_votos * 100 }}%</td>
                     </tr>
                     {% endfor %}
                 </tbody>
