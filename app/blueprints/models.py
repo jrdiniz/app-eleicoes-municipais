@@ -27,6 +27,7 @@ class Municipio(db.Model):
 
     # Relacionamento Um-Para-Muitos
     candidatos = db.relationship("Candidato", backref="municipio", lazy=True)
+    artigos = db.relationship("Artigo", backref="municipio", lazy=True)
 
     def __init__(self, sg_uf, nm_ue, nm_eleitores, nm_nulos, nm_brancos, nm_abstencoes, status_apuracao):
         self.sg_uf = sg_uf
@@ -82,3 +83,28 @@ class Candidato(db.Model):
         self.nr_votos = nr_votos
         self.municipio_id = municipio_id
     
+class Artigo(db.Model):
+    __tablename__ = "artigo"
+
+    id = db.Column(
+        db.String(36),
+        primary_key=True,
+        nullable=False,
+        unique=True,
+        index=True,
+        default=lambda: str(uuid.uuid4().hex),
+    )
+    titulo = db.Column(db.String(255), nullable=False)
+    subtitulo = db.Column(db.String(255), nullable=True)
+    thumbnail = db.Column(db.String(255), nullable=True)
+    conteudo = db.Column(db.Text, nullable=False)
+    data_criacao = db.Column(db.DateTime, nullable=False, default=datetime.datetime.now)
+    
+    municipio_id = db.Column(db.String(36), db.ForeignKey("municipio.id"), nullable=False)
+
+    def __init__(self, titulo, subtitulo, thumbnail, conteudo, municipio_id):
+        self.titulo = titulo
+        self.subtitulo = subtitulo
+        self.thumbnail = thumbnail
+        self.conteudo = conteudo
+        self.municipio_id = municipio_id

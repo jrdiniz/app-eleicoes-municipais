@@ -46,7 +46,11 @@
                             {% endif %}
                         
                         </td>
-                        <td><a href="{{ url_for('webui.candidatos', municipio_id = municipio.id)}}" class="btn btn-primary">Candidatos</a></td>
+                        <td>
+                            <a href="{{ url_for('webui.candidatos', municipio_id = municipio.id)}}" class="btn btn-primary">Candidatos</a>
+                            <a href="{{ url_for('webui.criar_thumbnail', municipio_id = municipio.id)}}" class="btn btn-primary">Gerar Thumbnail</a>
+                            <a href="{{ url_for('webui.criar_artigo', municipio_id = municipio.id)}}" class="btn btn-primary">Gerar Artigo</a>
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>

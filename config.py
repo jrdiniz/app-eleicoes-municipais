@@ -16,6 +16,7 @@ class ProductionConfig(Config):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {'pool_size': 20,'max_overflow':0, 'pool_recycle': 200, 'pool_pre_ping': True}
 
+    CREATOMATE_API_KEY = "e1beb1a49ed74076ab3e0e507ee20f7e5c8d7fe2570200bffc6c00af33fa3d3f65f0dd64febb56e95c6333f3ae3f3a41"
 
 class DevelopmentConfig(Config):
     # Debug
@@ -26,3 +27,5 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_ECHO = False
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {'pool_size': 20,'max_overflow':0, 'pool_recycle': 200, 'pool_pre_ping': True}
+
+    CREATOMATE_API_KEY = "e1beb1a49ed74076ab3e0e507ee20f7e5c8d7fe2570200bffc6c00af33fa3d3f65f0dd64febb56e95c6333f3ae3f3a41"

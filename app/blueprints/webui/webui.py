@@ -1,9 +1,13 @@
 import csv
+import requests
 
 from flask import Flask
 from flask import request
 from flask import Response
+from flask import redirect
+from flask import url_for
 from flask import render_template
+from flask import current_app
 from io import StringIO
 
 from app.blueprints.models import Candidato
@@ -23,8 +27,9 @@ def candidatos(municipio_id):
     candidatos = Candidato.query.filter(Candidato.municipio_id == municipio_id).all()
     return render_template("candidatos.html", candidatos=candidatos, municipio=municipio)
 
-def artigo():
-    return render_template("artigo.html")
+def criar_artigo(municipio_id):
+    municipio = Municipio.query.filter_by(id=municipio_id).first_or_404()
+    return render_template("artigo.html", municipio = municipio)
 
 
 def export_to_csv():
@@ -87,3 +92,28 @@ def export_to_csv():
     response.headers.set('Content-Disposition', 'attachment', filename='municipio_candidato.csv')
     
     return response
+
+
+def criar_thumbnail(municipio_id):
+    municipio = Municipio.query.filter_by(id=municipio_id).first_or_404()
+    options = {
+        # The ID of the template that you created in the template editor
+        'template_id': '6c4ce658-a53f-406e-b037-d2a84dc0b927',
+
+        # Modifications that you want to apply to the template
+            'modifications': {
+                'Municipio': f"Prefeitura de {municipio.nm_ue.title()}",
+            },
+    }
+
+    response = requests.post('https://api.creatomate.com/v1/renders',
+        headers={
+            'Authorization': f"Bearer {current_app.config['CREATOMATE_API_KEY']}",
+            'Content-Type': 'application/json',
+        },
+        json=options
+    )
+    print(response.json())
+    
+    municipio = Municipio.query.filter_by(id=municipio_id).first_or_404()
+    return redirect(url_for('webui.index'))

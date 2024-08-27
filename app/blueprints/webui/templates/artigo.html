@@ -3,29 +3,36 @@
 <div class="container">
     <div class="row">
         <div class="col-sm-12">
-            <h1>Eleições Municipais em {{ nm_ue}} ({{ sg_uf }}): Veja como foi a votação no 1º turno</h1>
-            <small>Saiba como os eleitores do município votaram para prefeitura de {{ nm_ue }}.</small>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                  <li class="breadcrumb-item"><a href="{{ url_for('webui.index')}}">Home</a></li>
+                  <li class="breadcrumb-item active" aria-current="page">Artigo do Município de {{ municipio.nm_ue.title() }}</li>
+                </ol>
+            </nav>
         </div>
     </div>
     <div class="row">
         <div class="col-sm-12">
-            <p>{{ nm_ue}} ({{ sg_uf }}) definiu os votos para prefeito e vereadores no primeiro turno das Eleições Municipais de 2024, realizado no domingo, 6 de outubro.</p>
+            <h1>Eleições Municipais em {{ municipio.nm_ue.title() }} ({{ municipio.sg_uf }}): Veja como foi a votação no 1º turno para Prefeito.</h1>
+            <h5>Saiba como os eleitores do município votaram para prefeitura de {{ municipio.nm_ue.title() }}.</h5>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-sm-12">
+            <p><span class="fw-bold">{{ municipio.nm_ue.title()}} ({{ municipio.sg_uf }})</span> definiu os votos para prefeito e vereadores no primeiro turno das Eleições Municipais de 2024, realizado no domingo, 6 de outubro.</p>
 
 
             <!-- Primeiro Turno -->
-            <p>No municipio de {{ nm_ue}} ({{ sg_uf }}) não haverá segundo turno, já que o candidato [Nome do Candidato] ([Sigla do Partido]) teve [XX%] dos votos, ou seja mais de 50% + 1 voto do total de eleitores que votaram nas eleições múnicipiais de 2024.</p>
+            <p>No municipio de {{ municipio.nm_ue.title()}} ({{ municipio.sg_uf }}) não haverá segundo turno, já que o candidato {{ municipio.candidatos[0].nm_urna_candidato.title() }} ([Sigla do Partido]) teve [XX%] dos votos, ou seja mais de 50% + 1 voto do total de eleitores que votaram nas eleições múnicipiais de 2024.</p>
             
             <!-- Segundo Turno -->
 
-            <p>Veja abaixo como cada candidato a prefeitura de {{ nm_ue}} ({{ sg_uf }}) saiu:</p>
+            <p>Veja abaixo como cada candidato a prefeitura de {{ municipio.nm_ue.title()}} ({{ municipio.sg_uf }}) saiu:</p>
 
             <ul>
-                <li>Candidato Fulano (Sigla do Partido): 1000 votos (52,99%)</li>
-                <li>Candidato Fulano (Sigla do Partido): 1000 votos (52,99%)</li>
-                <li>Candidato Fulano (Sigla do Partido): 1000 votos (52,99%)</li>
-                <li>Candidato Fulano (Sigla do Partido): 1000 votos (52,99%)</li>
-                <li>Candidato Fulano (Sigla do Partido): 1000 votos (52,99%)</li>
-                <li>Candidato Fulano (Sigla do Partido): 1000 votos (52,99%)</li>
+                {% for candidato in municipio.candidatos %}
+                <li>{{ candidato.nm_urna_candidato.title()}} ({{candidato.sg_partido }}): 1000 votos (52,99%)</li>
+                {% endfor %}
             </ul>
 
             
