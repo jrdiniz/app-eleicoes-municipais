@@ -74,12 +74,14 @@ def export_to_csv():
 
         for candidato in candidatos:
             candidato_percentual = candidato.nr_votos / municipio.nm_eleitores * 100 if municipio.nm_eleitores > 0 else 0   
+            ft_candidato_url = f"{request.url_root}static/fotos/{candidato.ft_candidato}"
             row.extend([
                 candidato.nr_candidato,
                 candidato.nm_urna_candidato,
                 candidato.sg_partido,
                 candidato.nr_votos,
-                f'{candidato_percentual}%'
+                f'{candidato_percentual}%',
+                f'{ft_candidato_url}'
             ])
         
         csvwriter.writerow(row)
