@@ -49,6 +49,7 @@ def export_to_csv():
         header.extend([
             f'candidato_{i}_numero', 
             f'candidato_{i}_nome', 
+            f'candidato_{i}_ft', 
             f'candidato_{i}_partido', 
             f'candidato_{i}_total_votos', 
             f'candidato_{i}_total_votos_percentual'
@@ -78,10 +79,10 @@ def export_to_csv():
             row.extend([
                 candidato.nr_candidato,
                 candidato.nm_urna_candidato,
+                f'{ft_candidato_url}',
                 candidato.sg_partido,
                 candidato.nr_votos,
-                f'{candidato_percentual}%',
-                f'{ft_candidato_url}'
+                f'{candidato_percentual}%'
             ])
         
         csvwriter.writerow(row)
@@ -115,7 +116,5 @@ def criar_thumbnail(municipio_id):
         },
         json=options
     )
-    print(response.json())
-    
     municipio = Municipio.query.filter_by(id=municipio_id).first_or_404()
-    return redirect(url_for('webui.index'))
+    return render_template('thumbnail.html', image_url=response.json()[0]['url'], municipio=municipio)
