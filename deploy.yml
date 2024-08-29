@@ -57,6 +57,11 @@
       group: '{{application_group}}'
       mode: 0644
 
+  - name: Delete app blueprints
+    file:
+      state: absent
+      path: '{{ application_path }}/{{ application_user }}/public_html/app/blueprints/'
+
   - name: Copy Application Source
     copy:
       src: ./app
