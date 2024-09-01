@@ -116,7 +116,6 @@ def criar_video(municipio_id):
     headers = {
         "Content-Type": "application/json"
     }
-    print(parameters)
     data = {
         "projectId": "dbf95ee8-c2ab-4619-9907-e05f1f539247",
         "templateId": "1b65627d-c5f8-46b6-8912-272f8bbccacc",
@@ -144,7 +143,6 @@ def criar_video(municipio_id):
     )
     db.session.add(video)
     db.session.commit()
-    print(response.json()['id'])
     
     return redirect(url_for('webui.videos'))    
 
