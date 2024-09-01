@@ -24,6 +24,8 @@ class Municipio(db.Model):
     nm_brancos = db.Column(db.Integer, nullable=False, default=0)
     nm_abstencoes = db.Column(db.Integer, nullable=False, default=0)
     status_apuracao = db.Column(db.Boolean, nullable=False, default=False)
+    
+    # percentual de urnas apuradas (precisa vir do portal)
     nm_urnas_apuradas = db.Column(db.Numeric(precision=2, scale=2), nullable=False, default=0)
 
     # Relacionamento Um-Para-Muitos
@@ -65,7 +67,7 @@ class Candidato(db.Model):
     # Descrição do cargo ao qual a candidata ou candidato concorre.
     ds_cargo = db.Column(db.String(100), nullable=False)
     
-    # Nome do arquivos de foto
+    # Nome do arquivo de foto
     ft_candidato = db.Column(db.String(255), nullable=True, default=None) 
     
     # Total de votos do candidato
@@ -109,4 +111,36 @@ class Artigo(db.Model):
         self.subtitulo = subtitulo
         self.thumbnail = thumbnail
         self.conteudo = conteudo
+        self.municipio_id = municipio_id
+
+class Video(db.Model):
+    __tablename__ = "video"
+
+    id = db.Column(
+        db.String(36),
+        primary_key=True,
+        nullable=False,
+        unique=True,
+        index=True,
+        default=lambda: str(uuid.uuid4().hex)
+    )
+    titulo = db.Column(db.String(255), nullable=False)
+    descricao = db.Column(db.Text, nullable=True)
+    data_criacao = db.Column(db.DateTime, nullable=False, default=datetime.datetime.now)
+    plainly_id = db.Column(db.String(36), nullable=True)
+    plainly_url = db.Column(db.Text, nullable=True)
+    plainly_state = db.Column(db.String(25), nullable=True)
+    plainly_template_name = db.Column(db.String(255), nullable=True)
+    plainly_template_id = db.Column(db.String(255), nullable=True)
+    municipio_id = db.Column(db.String(35), nullable=False, index=True)
+    
+    def __init__(self, titulo, descricao, data_criacao, plainly_id, plainly_url, plainly_state, plainly_template_name, plainly_template_id, municipio_id):
+        self.titulo = titulo
+        self.descricao = descricao
+        self.data_criacao = data_criacao
+        self.plainly_id = plainly_id
+        self.plainly_url = plainly_url
+        self.plainly_state = plainly_state
+        self.plainly_template_id = plainly_template_id
+        self.plainly_template_name = plainly_template_name
         self.municipio_id = municipio_id

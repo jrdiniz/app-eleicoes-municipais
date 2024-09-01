@@ -1,0 +1,21 @@
+<table class="table">
+    <thead>
+        <th>Título</th>
+        <th>Processamento</th>
+        <th></th>
+    </thead>
+    <tbody>
+        {% for video in videos %}
+        <tr>
+            <td>{{ video.titulo }}</td>
+            <td>{{ video.plainly_state }}</td>
+            <td>{{ video.plainly_id }}</td>
+            <td>
+                {% if video.plainly_state == "DONE" %}
+                    <a href="{{ video.plainly_url }}" target="_blank">Ver Vídeo</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

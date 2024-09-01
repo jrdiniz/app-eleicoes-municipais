@@ -1,5 +1,7 @@
 import csv
 import requests
+import datetime
+from requests.auth import HTTPBasicAuth
 
 from flask import Flask
 from flask import request
@@ -12,6 +14,8 @@ from io import StringIO
 
 from app.blueprints.models import Candidato
 from app.blueprints.models import Municipio
+from app.blueprints.models import Artigo
+from app.blueprints.models import Video
 from app.extensions.database import db
 
 # SQLAlchemy
@@ -96,25 +100,77 @@ def export_to_csv():
     
     return response
 
-
-def criar_thumbnail(municipio_id):
+def criar_video(municipio_id):
     municipio = Municipio.query.filter_by(id=municipio_id).first_or_404()
-    options = {
-        # The ID of the template that you created in the template editor
-        'template_id': '6c4ce658-a53f-406e-b037-d2a84dc0b927',
-
-        # Modifications that you want to apply to the template
-            'modifications': {
-                'Municipio': f"Prefeitura de {municipio.nm_ue.title()}",
-            },
+    candidatos = Candidato.query.filter(Candidato.municipio_id == municipio_id).all()
+    
+    parameters = {}
+    parameters[f"cidade"] = municipio.nm_ue
+    parameters[f"cidade2"] = f"{municipio.nm_ue.title()} - {municipio.sg_uf.upper()}"
+    for i, candidato in enumerate(candidatos, start=1):
+        parameters[f"candidato{i}Nome"] = candidato.nm_urna_candidato
+        parameters[f"candidato{i}Partido"] = candidato.sg_partido
+        parameters[f"candidato{i}Foto"] = f"https://eleicoes.gorobei.net/static/fotos/{candidato.ft_candidato}"
+    
+    endpoint = "https://api.plainlyvideos.com/api/v2/renders"
+    headers = {
+        "Content-Type": "application/json"
     }
-
-    response = requests.post('https://api.creatomate.com/v1/renders',
-        headers={
-            'Authorization': f"Bearer {current_app.config['CREATOMATE_API_KEY']}",
-            'Content-Type': 'application/json',
-        },
-        json=options
+    print(parameters)
+    data = {
+        "projectId": "dbf95ee8-c2ab-4619-9907-e05f1f539247",
+        "templateId": "1b65627d-c5f8-46b6-8912-272f8bbccacc",
+        "parameters": parameters
+    }
+    auth = HTTPBasicAuth(current_app.config["PLAINLY_API_KEY"],'')
+    
+    response = requests.post(
+        endpoint, 
+        headers=headers, 
+        json=data, 
+        auth=auth
     )
-    municipio = Municipio.query.filter_by(id=municipio_id).first_or_404()
-    return render_template('thumbnail.html', image_url=response.json()[0]['url'], municipio=municipio)
+    
+    video = Video(
+        municipio_id=municipio.id,
+        data_criacao=datetime.datetime.now(),
+        titulo=f"Eleições Municípais: {municipio.nm_ue.title()} - {municipio.sg_uf.upper()}",
+        descricao=f"Confira o resultado da eleição para prefeito de {municipio.nm_ue.title()} - {municipio.sg_uf.upper()}",
+        plainly_url=None,
+        plainly_id=response.json()['id'],
+        plainly_state=response.json()['state'],
+        plainly_template_name=response.json()['projectName'],
+        plainly_template_id=response.json()['projectId']
+    )
+    db.session.add(video)
+    db.session.commit()
+    print(response.json()['id'])
+    
+    return redirect(url_for('webui.videos'))    
+
+def videos():
+    videos = Video.query.all()
+    return render_template('videos.html', videos=videos)
+
+
+def video_atualizar_state():
+    videos = Video.query.all()
+    endpoint = "https://api.plainlyvideos.com/api/v2/renders"
+    headers = {
+        "Content-Type": "application/json"
+    }
+    auth = HTTPBasicAuth(current_app.config["PLAINLY_API_KEY"], '')
+
+    for video in videos:
+        if video.plainly_state == 'PENDING':
+            response = requests.get(
+                f"{endpoint}/{video.plainly_id}",
+                headers=headers,
+                auth=auth
+            )
+            if response.json()['state'] == 'DONE':
+                video.plainly_state = response.json()['state']
+                video.plainly_url = response.json()['output']
+                db.session.commit()
+
+    return redirect(url_for('webui.videos'))

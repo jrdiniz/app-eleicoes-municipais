@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="row py-4">
+        <div class="col-sm-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                  <li class="breadcrumb-item"><a href="{{ url_for('webui.index')}}">Home</a></li>
+                  <li class="breadcrumb-item active" aria-current="page">Vídeos com os Resultados</li>
+                </ol>
+            </nav>
+        </div>
+        <div class="col-sm-12">
+            <h1>Vídeos com os Resultados</h1>
+            <a href="{{ url_for('webui.video_atualizar_state')}}">Atualizar Status</a>
+        </div>
+    </div>
+    <hr>
+    <div class="row">
+        <div class="col-sm-12">
+            <table class="table">
+                <thead>
+                    <th>Título</th>
+                    <th>Processamento</th>
+                    <th></th>
+                </thead>
+                <tbody>
+                    {% for video in videos %}
+                    <tr>
+                        <td>{{ video.titulo }}</td>
+                        <td>{{ video.plainly_state }}</td>
+                        <td>{{ video.plainly_id }}</td>
+                        <td>
+                            {% if video.plainly_state == "DONE" %}
+                                <a href="{{ video.plainly_url }}" target="_blank">Ver Vídeo</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
