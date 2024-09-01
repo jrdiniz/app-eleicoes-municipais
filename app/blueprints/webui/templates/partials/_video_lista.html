@@ -1,21 +1,46 @@
-<table class="table">
-    <thead>
-        <th>Título</th>
-        <th>Processamento</th>
-        <th></th>
-    </thead>
-    <tbody>
-        {% for video in videos %}
-        <tr>
-            <td>{{ video.titulo }}</td>
-            <td>{{ video.plainly_state }}</td>
-            <td>{{ video.plainly_id }}</td>
-            <td>
-                {% if video.plainly_state == "DONE" %}
-                    <a href="{{ video.plainly_url }}" target="_blank">Ver Vídeo</a>
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="col-sm-12">
+    <table class="table table-hover">
+        <thead class="table-dark">
+            <th>Título</th>
+            <th>Processamento</th>
+            <th>ID Plainly</th>
+            <th></th>
+        </thead>
+        <tbody class="table-group-divider">
+            {% for video in videos %}
+            {% if video.plainly_state == "DONE" %}
+            <tr class="table-success">
+            {% elif video.plainly_state == "PENDING" %}
+            <tr class="table-warning">
+            {% elif video.plainly_state == "IN_PROGRESS" %}
+            <tr class="table-primary">
+            {% elif video.plainly_state == "INVALID" %}
+            <tr class="table-danger">
+            {% else %}
+            <tr>
+            {% endif %}
+                <td>{{ video.titulo }}</td>
+                <td>
+                    {% if video.plainly_state == "DONE" %}
+                        <span class="fw-bold">Finalizado</span>
+                    {% elif video.plainly_state == "PENDING" %}
+                        <span class="fw-bold">Pendente</span>
+                    {% elif video.plainly_state == "IN_PROGRESS" %}
+                        <span class="fw-bold">Processando</span>
+                    {% elif video.plainly_state == "INVALID" %}
+                        <span class="fw-bold">Erro</span>
+                    {% else %}
+                        {{ video.plainly_state }}
+                    {% endif %}
+                </td>
+                <td>{{ video.plainly_id }}</td>
+                <td>
+                    {% if video.plainly_state == "DONE" %}
+                        <a href="{{ video.plainly_url }}" target="_blank">Ver Vídeo</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>

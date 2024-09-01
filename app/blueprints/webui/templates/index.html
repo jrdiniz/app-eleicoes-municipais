@@ -16,8 +16,8 @@
     <div class="row">
         <div class="row align-items-center py-1">
             <div class="col-sm-6">
-                <a href="{{ url_for('webui.export_to_csv')}}" class="btn btn-primary">Exportar CSV</a>
-                <a href="{{ url_for('webui.videos')}}" class="btn btn-dark">Vídeos</a>
+                <a href="{{ url_for('webui.export_to_csv')}}" class="btn btn-primary"><i class="bi bi-box-arrow-down"></i> Exportar CSV</a>
+                <a href="{{ url_for('webui.videos')}}" class="btn btn-dark"><i class="bi bi-film"></i> Vídeos</a>
             </div>
         </div>
     </div>
@@ -50,7 +50,7 @@
                         <td>
                             <a href="{{ url_for('webui.candidatos', municipio_id = municipio.id)}}" class="btn btn-primary">Candidatos</a>
                             <a href="{{ url_for('webui.criar_artigo', municipio_id = municipio.id)}}" class="btn btn-primary"><i class="bi bi-card-text"></i> Artigo</a>
-                            <a href="{{ url_for('webui.criar_video', municipio_id = municipio.id)}}" class="btn btn-dark"><i class="bi bi-film"></i> Vídeo</a>
+                            <a href="{{ url_for('webui.criar_video', municipio_id = municipio.id)}}" class="btn btn-dark"><i class="bi bi-film"></i> Gerar Vídeo</a>
                         </td>
                     </tr>
                     {% endfor %}

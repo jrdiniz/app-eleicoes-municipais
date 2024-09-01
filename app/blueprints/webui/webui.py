@@ -151,7 +151,7 @@ def videos():
     return render_template('videos.html', videos=videos)
 
 
-def video_atualizar_state():
+def video_lista():
     videos = Video.query.all()
     endpoint = "https://api.plainlyvideos.com/api/v2/renders"
     headers = {
@@ -160,15 +160,14 @@ def video_atualizar_state():
     auth = HTTPBasicAuth(current_app.config["PLAINLY_API_KEY"], '')
 
     for video in videos:
-        if video.plainly_state == 'PENDING':
+        if video.plainly_state != 'PENDING' or video.plainly_state != 'INVALID':
             response = requests.get(
                 f"{endpoint}/{video.plainly_id}",
                 headers=headers,
                 auth=auth
             )
-            if response.json()['state'] == 'DONE':
-                video.plainly_state = response.json()['state']
-                video.plainly_url = response.json()['output']
-                db.session.commit()
-
-    return redirect(url_for('webui.videos'))
+            video.plainly_state = response.json()['state']
+            video.plainly_url = response.json()['output']
+            db.session.commit()
+            
+    return render_template('partials/_video_lista.html', videos = videos)

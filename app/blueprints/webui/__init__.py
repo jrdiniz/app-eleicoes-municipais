@@ -7,7 +7,7 @@ from .webui import videos
 from .webui import criar_artigo
 from .webui import export_to_csv
 from .webui import criar_video
-from .webui import video_atualizar_state
+from .webui import video_lista
 
 # Register blueprints
 bp = Blueprint("webui", __name__, template_folder="templates", static_folder="static")
@@ -37,8 +37,8 @@ videos.methods = ["GET"]
 bp.add_url_rule("/videos", view_func=videos)
 
 # Updade Plainly State
-video_atualizar_state.methods = ["GET"]
-bp.add_url_rule("/video/atualizar", view_func=video_atualizar_state)
+video_lista.methods = ["GET"]
+bp.add_url_rule("/video/lista", view_func=video_lista)
 
 
 def init_app(app):
