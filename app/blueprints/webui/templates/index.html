@@ -10,7 +10,7 @@
             </nav>
         </div>
         <div class="col-sm-12">
-            <h1>Municipios com mais de 200 mil eleitores</h1>
+            <h1>Municipíos com mais de 200 mil eleitores</h1>
         </div> 
     </div>
     <div class="row">
@@ -30,6 +30,7 @@
                     <th>Candidatos</th>
                     <th>Eleitores</th>
                     <th>Apuração</th>
+                    <th>2º Turno</th>
                     <th></th>
                 </thead>
                 <tbody>
@@ -41,11 +42,22 @@
                         <td>{{ municipio.nm_eleitores }}</td>
                         <td>
                             {% if municipio.status_apuracao == True %}
-                            <span class="badge text-bg-success">Finalizada</span>
+                            <span class="badge text-bg-success">Matemáticamente Definida</span>
                             {% else %}
                             <span class="badge text-bg-danger">Em Andamento</span>
                             {% endif %}
                         
+                        </td>
+                        <td class="text-center">
+                            {% if municipio.status_apuracao == True %}
+                                {% if municipio.segundo_turno == True %}
+                                Sim
+                                {% else %}
+                                Não
+                                {% endif %}
+                            {% else %}
+                            <span> - </span>
+                            {% endif %}
                         </td>
                         <td>
                             <a href="{{ url_for('webui.candidatos', municipio_id = municipio.id)}}" class="btn btn-primary">Candidatos</a>

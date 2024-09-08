@@ -24,7 +24,7 @@ class Municipio(db.Model):
     nm_brancos = db.Column(db.Integer, nullable=False, default=0)
     nm_abstencoes = db.Column(db.Integer, nullable=False, default=0)
     status_apuracao = db.Column(db.Boolean, nullable=False, default=False)
-    
+    segundo_turno = db.Column(db.Boolean, nullable=False, default=False)
     # percentual de urnas apuradas (precisa vir do portal)
     nm_urnas_apuradas = db.Column(db.Numeric(precision=2, scale=2), nullable=False, default=0)
 
@@ -32,7 +32,7 @@ class Municipio(db.Model):
     candidatos = db.relationship("Candidato", backref="municipio", lazy=True)
     artigos = db.relationship("Artigo", backref="municipio", lazy=True)
 
-    def __init__(self, sg_uf, nm_ue, nm_eleitores, nm_nulos, nm_brancos, nm_abstencoes, status_apuracao, nm_urnas_apuradas):
+    def __init__(self, sg_uf, nm_ue, nm_eleitores, nm_nulos, nm_brancos, nm_abstencoes, status_apuracao, segundo_turno, nm_urnas_apuradas):
         self.sg_uf = sg_uf
         self.nm_ue = nm_ue
         self.nm_eleitores = nm_eleitores
@@ -41,6 +41,7 @@ class Municipio(db.Model):
         self.nm_abstencoes = nm_abstencoes
         self.status_apuracao = status_apuracao
         self.nm_urnas_apuradas = nm_urnas_apuradas
+        self.segundo_turno = segundo_turno
 
 
 class Candidato(db.Model):

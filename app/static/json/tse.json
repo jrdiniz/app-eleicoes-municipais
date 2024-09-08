@@ -1,0 +1,197 @@
+{
+    "ele": "{inteiro}",
+    "t": "{1|2}",
+    "f": "{s|o}",
+    "sup": "{s|n}",
+    "tpabr": "{br|uf|mu|zona}",
+    "cdabr": "{br|<uf>|<cód. município>|<zona>}",
+    "dg": "{dd/mm/aaaa}",
+    "hg": "{hh:mm:ss}",
+    "dv": "{s|n}",
+    "dt": "{dd/mm/aaaa}",
+    "ht": "{hh:mm:ss}",
+    "tf": "{s|n}",
+    "and": "{n|p|f}",
+    "md": "{e|s|n}",
+    "esae": "{s|n}",
+    "mnae": [
+        "{texto}"
+    ],
+    "carg": [
+        {
+            "cd": "{inteiro}",
+            "nmn": "{texto}",
+            "nmm": "{texto}",
+            "nmf": "{texto}",
+            "nv": "{inteiro}",
+            "fed": [
+                {
+                    "n": "{inteiro}",
+                    "nm": "{texto}",
+                    "sg": "{texto}",
+                    "com": "{texto}",
+                    "npar": [
+                        "{inteiro}"
+                    ]
+                }
+            ],
+            "agr": [
+                {
+                    "n": "{inteiro}",
+                    "nm": "{texto}",
+                    "tp": "{c|i|f}",
+                    "tvtn": "{inteiro}",
+                    "tvtl": "{inteiro}",
+                    "tvan": "{inteiro}",
+                    "tval": "{inteiro}",
+                    "vag": "{inteiro}",
+                    "com": "{texto}",
+                    "par": [
+                        {
+                            "n": "{inteiro}",
+                            "sg": "{texto}",
+                            "nm": "{texto}",
+                            "nfed": "{inteiro}",
+                            "tvtn": "{inteiro}",
+                            "tvtl": "{inteiro}",
+                            "tvan": "{inteiro}",
+                            "tval": "{inteiro}",
+                            "cand": [
+                                {
+                                    "n": "{inteiro}",
+                                    "sqcand": "{inteiro}",
+                                    "nm": "{texto}",
+                                    "nmu": "{texto}",
+                                    "dt": "{dd/mm/aaaa}",
+                                    "dvt": "{texto}",
+                                    "seq": "{inteiro}",
+                                    "e": "{s|n}",
+                                    "st": "{texto}",
+                                    "vap": "{inteiro}",
+                                    "pvap": "{decimal}",
+                                    "pvapn": "{decimal}",
+                                    "vs": [
+                                        {
+                                            "tp": "{v|s1|s2}",
+                                            "sqcand": "{inteiro}",
+                                            "nm": "{texto}",
+                                            "nmu": "{texto}",
+                                            "sgp": "{texto}"
+                                        }
+                                    ],
+                                    "subs": [
+                                        {
+                                            "nm": "{texto}",
+                                            "nmu": "{texto}",
+                                            "sgp": "{texto}"
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "perg": [
+        {
+            "cd": "{inteiro}",
+            "ds": "{texto}",
+            "resp": [
+                {
+                    "n": "{inteiro}",
+                    "ds": "{texto}",
+                    "seq": "{inteiro}",
+                    "e": "{s|n}",
+                    "st": "{texto}",
+                    "vap": "{inteiro}",
+                    "pvap": "{decimal}",
+                    "pvapn": "{decimal}"
+                }
+            ]
+        }
+    ],
+    "s": {
+        "ts": "{inteiro}",
+        "st": "{inteiro}",
+        "pst": "{decimal}",
+        "pstn": "{decimal}",
+        "snt": "{inteiro}",
+        "psnt": "{decimal}",
+        "psntn": "{decimal}",
+        "si": "{inteiro}",
+        "psi": "{decimal}",
+        "psin": "{decimal}",
+        "sni": "{inteiro}",
+        "psni": "{decimal}",
+        "psnin": "{decimal}",
+        "sa": "{inteiro}",
+        "psa": "{decimal}",
+        "psan": "{decimal}",
+        "sna": "{inteiro}",
+        "psna": "{decimal}",
+        "psnan": "{decimal}"
+    },
+    "e": {
+        "te": "{inteiro}",
+        "est": "{inteiro}",
+        "pest": "{decimal}",
+        "pestn": "{decimal}",
+        "esnt": "{inteiro}",
+        "pesnt": "{decimal}",
+        "pesntn": "{decimal}",
+        "esi": "{inteiro}",
+        "pesi": "{decimal}",
+        "pesin": "{decimal}",
+        "esni": "{inteiro}",
+        "pesni": "{decimal}",
+        "pesnin": "{decimal}",
+        "esa": "{inteiro}",
+        "pesa": "{decimal}",
+        "pesan": "{decimal}",
+        "esna": "{inteiro}",
+        "pesna": "{decimal}",
+        "pesnan": "{decimal}",
+        "c": "{inteiro}",
+        "pc": "{decimal}",
+        "pcn": "{decimal}",
+        "a": "{inteiro}",
+        "pa": "{decimal}",
+        "pan": "{decimal}"
+    },
+    "v": {
+        "tv": "{inteiro}",
+        "vvc": "{inteiro}",
+        "pvvc": "{decimal}",
+        "pvvcn": "{decimal}",
+        "vv": "{inteiro}",
+        "pvv": "{decimal}",
+        "pvvn": "{decimal}",
+        "vl": "{inteiro}",
+        "pvl": "{decimal}",
+        "pvln": "{decimal}",
+        "vnom": "{inteiro}",
+        "pvnom": "{decimal}",
+        "pvnomn": "{decimal}",
+        "van": "{inteiro}",
+        "pvan": "{decimal}",
+        "pvann": "{decimal}",
+        "vansj": "{inteiro}",
+        "pvansj": "{decimal}",
+        "pvansjn": "{decimal}",
+        "vscv": "{inteiro}",
+        "vb": "{inteiro}",
+        "pvb": "{decimal}",
+        "pvbn": "{decimal}",
+        "tvn": "{inteiro}",
+        "ptvn": "{decimal}",
+        "ptvnn": "{decimal}",
+        "vn": "{inteiro}",
+        "pvn": "{decimal}",
+        "pvnn": "{decimal}",
+        "vnt": "{inteiro}",
+        "pvnt": "{decimal}",
+        "pvntn": "{decimal}"
+    }
+}

@@ -73,3 +73,9 @@ docker exec -it <container-id> bash
 
 ## Deploy using Ansible
 
+
+## Informações TSE
+
+### JSON TSE
+
+```https://www.tse.jus.br/++theme++justica_eleitoral/pdfjs/web/viewer.html?file=https://www.tse.jus.br/eleicoes/arquivos/tse-ea20-arquivo-de-resultado-unificado/@@download/file/TSE-EA20-Arquivo-de-resultado-unificado.pdf ```

@@ -10,6 +10,7 @@ from flask import redirect
 from flask import url_for
 from flask import render_template
 from flask import current_app
+from flask import jsonify
 from io import StringIO
 
 from app.blueprints.models import Candidato
@@ -102,26 +103,55 @@ def export_to_csv():
 
 def criar_video(municipio_id):
     municipio = Municipio.query.filter_by(id=municipio_id).first_or_404()
-    candidatos = Candidato.query.filter(Candidato.municipio_id == municipio_id).all()
-    
+    candidatos = Candidato.query.filter(Candidato.municipio_id == municipio_id).order_by(Candidato.nr_votos.desc()).all()
+
+    # Pega as configurações do template conforme o número de candidatos
+    template = pegar_template(len(candidatos))
+        
     parameters = {}
     parameters[f"cidade"] = municipio.nm_ue
+    
+    # Determina se haverá segundo turno
+    if municipio.segundo_turno:
+        parameters[f"turnoResultado"] = "Haverá segundo turno"
+        parameters[f"disputa2TurnoC1"] = str(100)
+        parameters[f"disputa2TurnoC2"] = str(100)
+    else:
+        parameters[f"turnoResultado"] = "Não haverá segundo turno"
+        parameters[f"semSegundoTurno"] = str(100)
+        
+    # Eleição Matemáticamente definida
+    parameters[f"urnasApuradas"] = f"{municipio.nm_urnas_apuradas}"
+    
     parameters[f"cidade2"] = f"{municipio.nm_ue.title()} - {municipio.sg_uf.upper()}"
     for i, candidato in enumerate(candidatos, start=1):
         parameters[f"candidato{i}Nome"] = candidato.nm_urna_candidato
         parameters[f"candidato{i}Partido"] = candidato.sg_partido
+        parameters[f"candidato{i}Percentual"] = f"{candidato.nr_votos / municipio.nm_eleitores * 100:.2f} %"
+        parameters[f"candidato{i}Votos"] = f"{candidato.nr_votos}"
         parameters[f"candidato{i}Foto"] = f"https://eleicoes.gorobei.net/static/fotos/{candidato.ft_candidato}"
+    
+    # Abstenções
+    parameters[f"abstencoesPercentual"] = f"{municipio.nm_abstencoes / municipio.nm_eleitores * 100:.2f} %"
+    parameters[f"abstencoesTotal"] = f"{municipio.nm_abstencoes}"
+    
+    # Brancos e Nulos
+    parameters[f"brancosNulosPercentual"] = f"{(municipio.nm_brancos + municipio.nm_nulos) / municipio.nm_eleitores * 100:.2f} %"
+    parameters[f"brancosNulosTotal"] = f"{municipio.nm_brancos + municipio.nm_nulos}"
+    
     
     endpoint = "https://api.plainlyvideos.com/api/v2/renders"
     headers = {
         "Content-Type": "application/json"
     }
     data = {
-        "projectId": "dbf95ee8-c2ab-4619-9907-e05f1f539247",
-        "templateId": "1b65627d-c5f8-46b6-8912-272f8bbccacc",
+        "projectId": f"{template['projectId']}",
+        "templateId":  f"{template['templateId']}",
         "parameters": parameters
     }
-    auth = HTTPBasicAuth(current_app.config["PLAINLY_API_KEY"],'')
+    
+    auth = HTTPBasicAuth(current_app.config["PLAINLY_API_KEY"], '')
+    
     
     response = requests.post(
         endpoint, 
@@ -144,8 +174,59 @@ def criar_video(municipio_id):
     db.session.add(video)
     db.session.commit()
     
+    
+    #return jsonify(data)
     return redirect(url_for('webui.videos'))    
 
+
+def pegar_template(nm_candidatos):
+    templates = [
+        {
+            'projectId': '',
+            'templateId': "1b65627d-c5f8-46b6-8912-272f8bbccacc",
+            'nm_candidados': 3
+        },
+        {
+            'projectId': '18bc9797-0eb0-4d3f-b07b-7087ac0d9bbb',
+            'templateId': "ef0eaf38-0d36-4c9f-9e58-e981fe7714d4",
+            'nm_candidados': 4
+        },
+        {
+            'projectId': '',
+            'templateId': "1b65627d-c5f8-46b6-8912-272f8bbccacc",
+            'nm_candidados': 5
+        },
+        {
+            'projectId': '',
+            'templateId': "1b65627d-c5f8-46b6-8912-272f8bbccacc",
+            'nm_candidados': 6
+        },
+        {
+            'projectId': '',
+            'templateId': "1b65627d-c5f8-46b6-8912-272f8bbccacc",
+            'nm_candidados': 7
+        },
+        {
+            'projectId': '',
+            'templateId': "1b65627d-c5f8-46b6-8912-272f8bbccacc",
+            'nm_candidados': 8
+        },
+        {
+            'projectId': '',
+            'templateId': "1b65627d-c5f8-46b6-8912-272f8bbccacc",
+            'nm_candidados': 9
+        },
+        {
+            'projectId': '',
+            'id': "1b65627d-c5f8-46b6-8912-272f8bbccacc",
+            'nm_candidados': 10
+        }
+    ]
+    for template in templates:
+        if template['nm_candidados'] == int(nm_candidatos):
+            return template
+    
+    
 def videos():
     videos = Video.query.all()
     return render_template('videos.html', videos=videos)
@@ -171,3 +252,215 @@ def video_lista():
             db.session.commit()
             
     return render_template('partials/_video_lista.html', videos = videos)
+
+
+def tse():
+    data = {
+        "ele": "00001",
+        "t": "1",
+        "f": "2",
+        "sup": "n",
+        "tpabr": "mu",
+        "cdabr": "00000",
+        "dg": "06/10/2024",
+        "hg": "18:00:01",
+        "dv": "{s|n}",
+        "dt": "{dd/mm/aaaa}",
+        "ht": "{hh:mm:ss}",
+        "tf": "{s|n}",
+        "and": "{n|p|f}",
+        "md": "{e|s|n}",
+        "esae": "{s|n}",
+        "mnae": [
+            "{texto}"
+        ],
+        "carg": [
+            {
+                "cd": "{inteiro}",
+                "nmn": "{texto}",
+                "nmm": "{texto}",
+                "nmf": "{texto}",
+                "nv": "{inteiro}",
+                "fed": [
+                    {
+                        "n": "{inteiro}",
+                        "nm": "{texto}",
+                        "sg": "{texto}",
+                        "com": "{texto}",
+                        "npar": [
+                            "{inteiro}"
+                        ]
+                    }
+                ],
+                "agr": [
+                    {
+                        "n": "{inteiro}",
+                        "nm": "{texto}",
+                        "tp": "{c|i|f}",
+                        "tvtn": "{inteiro}",
+                        "tvtl": "{inteiro}",
+                        "tvan": "{inteiro}",
+                        "tval": "{inteiro}",
+                        "vag": "{inteiro}",
+                        "com": "{texto}",
+                        "par": [
+                            {
+                                "n": "{inteiro}",
+                                "sg": "{texto}",
+                                "nm": "{texto}",
+                                "nfed": "{inteiro}",
+                                "tvtn": "{inteiro}",
+                                "tvtl": "{inteiro}",
+                                "tvan": "{inteiro}",
+                                "tval": "{inteiro}",
+                                "cand": [
+                                    {
+                                        "n": "{inteiro}",
+                                        "sqcand": "{inteiro}",
+                                        "nm": "{texto}",
+                                        "nmu": "{texto}",
+                                        "dt": "{dd/mm/aaaa}",
+                                        "dvt": "{texto}",
+                                        "seq": "{inteiro}",
+                                        "e": "{s|n}",
+                                        "st": "{texto}",
+                                        "vap": "{inteiro}",
+                                        "pvap": "{decimal}",
+                                        "pvapn": "{decimal}",
+                                        "vs": [
+                                            {
+                                                "tp": "{v|s1|s2}",
+                                                "sqcand": "{inteiro}",
+                                                "nm": "{texto}",
+                                                "nmu": "{texto}",
+                                                "sgp": "{texto}"
+                                            }
+                                        ],
+                                        "subs": [
+                                            {
+                                                "nm": "{texto}",
+                                                "nmu": "{texto}",
+                                                "sgp": "{texto}"
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ],
+        "perg": [
+            {
+                "cd": "{inteiro}",
+                "ds": "{texto}",
+                "resp": [
+                    {
+                        "n": "{inteiro}",
+                        "ds": "{texto}",
+                        "seq": "{inteiro}",
+                        "e": "{s|n}",
+                        "st": "{texto}",
+                        "vap": "{inteiro}",
+                        "pvap": "{decimal}",
+                        "pvapn": "{decimal}"
+                    }
+                ]
+            }
+        ],
+        "s": {
+            "ts": "{inteiro}",
+            "st": "{inteiro}",
+            "pst": "{decimal}",
+            "pstn": "{decimal}",
+            "snt": "{inteiro}",
+            "psnt": "{decimal}",
+            "psntn": "{decimal}",
+            "si": "{inteiro}",
+            "psi": "{decimal}",
+            "psin": "{decimal}",
+            "sni": "{inteiro}",
+            "psni": "{decimal}",
+            "psnin": "{decimal}",
+            "sa": "{inteiro}",
+            "psa": "{decimal}",
+            "psan": "{decimal}",
+            "sna": "{inteiro}",
+            "psna": "{decimal}",
+            "psnan": "{decimal}"
+        },
+        "e": {
+            "te": "{inteiro}",
+            "est": "{inteiro}",
+            "pest": "{decimal}",
+            "pestn": "{decimal}",
+            "esnt": "{inteiro}",
+            "pesnt": "{decimal}",
+            "pesntn": "{decimal}",
+            "esi": "{inteiro}",
+            "pesi": "{decimal}",
+            "pesin": "{decimal}",
+            "esni": "{inteiro}",
+            "pesni": "{decimal}",
+            "pesnin": "{decimal}",
+            "esa": "{inteiro}",
+            "pesa": "{decimal}",
+            "pesan": "{decimal}",
+            "esna": "{inteiro}",
+            "pesna": "{decimal}",
+            "pesnan": "{decimal}",
+            "c": "{inteiro}",
+            "pc": "{decimal}",
+            "pcn": "{decimal}",
+            "a": "{inteiro}",
+            "pa": "{decimal}",
+            "pan": "{decimal}"
+        },
+        "v": {
+            "tv": "{inteiro}",
+            "vvc": "{inteiro}",
+            "pvvc": "{decimal}",
+            "pvvcn": "{decimal}",
+            "vv": "{inteiro}",
+            "pvv": "{decimal}",
+            "pvvn": "{decimal}",
+            "vl": "{inteiro}",
+            "pvl": "{decimal}",
+            "pvln": "{decimal}",
+            "vnom": "{inteiro}",
+            "pvnom": "{decimal}",
+            "pvnomn": "{decimal}",
+            "van": "{inteiro}",
+            "pvan": "{decimal}",
+            "pvann": "{decimal}",
+            "vansj": "{inteiro}",
+            "pvansj": "{decimal}",
+            "pvansjn": "{decimal}",
+            "vscv": "{inteiro}",
+            "vb": "{inteiro}",
+            "pvb": "{decimal}",
+            "pvbn": "{decimal}",
+            "tvn": "{inteiro}",
+            "ptvn": "{decimal}",
+            "ptvnn": "{decimal}",
+            "vn": "{inteiro}",
+            "pvn": "{decimal}",
+            "pvnn": "{decimal}",
+            "vnt": "{inteiro}",
+            "pvnt": "{decimal}",
+            "pvntn": "{decimal}"
+        }
+    }
+    
+    result = {
+        'turno': data['t'],
+        'totalizacao_final': data['tf'],
+        'matematicamente_definido': data['md'],
+        'numero_federacao': data['carg'][0]['fed'][0]['n'],
+        'sigla_federacao': data['carg'][0]['fed'][0]['sg'],
+        'nome_federecao': data['carg'][0]['fed'][0]['nm'],
+
+    }
+    return jsonify (result)
+    #return current_app.send_static_file("json/tse.json")

@@ -8,6 +8,7 @@ from .webui import criar_artigo
 from .webui import export_to_csv
 from .webui import criar_video
 from .webui import video_lista
+from .webui import tse
 
 # Register blueprints
 bp = Blueprint("webui", __name__, template_folder="templates", static_folder="static")
@@ -39,6 +40,10 @@ bp.add_url_rule("/videos", view_func=videos)
 # Updade Plainly State
 video_lista.methods = ["GET"]
 bp.add_url_rule("/video/lista", view_func=video_lista)
+
+# TSE Test
+tse.methods = ["GET"]
+bp.add_url_rule("/tse", view_func=tse)
 
 
 def init_app(app):
