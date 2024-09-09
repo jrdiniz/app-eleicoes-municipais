@@ -120,24 +120,31 @@ def criar_video(municipio_id):
         parameters[f"turnoResultado"] = "Não haverá segundo turno"
         parameters[f"semSegundoTurno"] = str(100)
         
-    # Eleição Matemáticamente definida
-    parameters[f"urnasApuradas"] = f"{municipio.nm_urnas_apuradas}"
+    # Status da Apuração
+    parameters[f"urnasApuradas"] = "Eleição matematicamente definida"
     
-    parameters[f"cidade2"] = f"{municipio.nm_ue.title()} - {municipio.sg_uf.upper()}"
+    parameters[f"cidade2"] = f"{municipio.nm_ue} - {municipio.sg_uf.upper()}"
     for i, candidato in enumerate(candidatos, start=1):
-        parameters[f"candidato{i}Nome"] = candidato.nm_urna_candidato
+        parameters[f"candidato{i}Nome"] = quebrar_linha(candidato.nm_urna_candidato)
         parameters[f"candidato{i}Partido"] = candidato.sg_partido
         parameters[f"candidato{i}Percentual"] = f"{candidato.nr_votos / municipio.nm_eleitores * 100:.2f} %"
-        parameters[f"candidato{i}Votos"] = f"{candidato.nr_votos}"
+        parameters[f"candidato{i}Votos"] = f"{candidato.nr_votos} votos"
         parameters[f"candidato{i}Foto"] = f"https://eleicoes.gorobei.net/static/fotos/{candidato.ft_candidato}"
+    
+    for i, candidato in enumerate(candidatos, start=1):
+        if (candidato.nr_votos / municipio.nm_eleitores * 100) >= 50.01:
+            parameters[f"turnoResultado"] = "Não haverá segundo turno"
+            break
+        else:
+            parameters[f"turnoResultado"] = "Haverá segundo turno"
     
     # Abstenções
     parameters[f"abstencoesPercentual"] = f"{municipio.nm_abstencoes / municipio.nm_eleitores * 100:.2f} %"
     parameters[f"abstencoesTotal"] = f"{municipio.nm_abstencoes}"
     
     # Brancos e Nulos
-    parameters[f"brancosNulosPercentual"] = f"{(municipio.nm_brancos + municipio.nm_nulos) / municipio.nm_eleitores * 100:.2f} %"
-    parameters[f"brancosNulosTotal"] = f"{municipio.nm_brancos + municipio.nm_nulos}"
+    parameters[f"brancosNulosPercentual"] = f"{(municipio.nm_brancos_nulos) / municipio.nm_eleitores * 100:.2f} %"
+    parameters[f"brancosNulosTotal"] = f"{municipio.nm_brancos_nulos} votos"
     
     
     endpoint = "https://api.plainlyvideos.com/api/v2/renders"
@@ -225,15 +232,21 @@ def pegar_template(nm_candidatos):
     for template in templates:
         if template['nm_candidados'] == int(nm_candidatos):
             return template
-    
+
+
+def quebrar_linha(nome_candidato):
+    if ' ' in nome_candidato:
+        primeiro_escapo = nome_candidato.split(' ', 1)
+        return primeiro_escapo[0] + '\n' + primeiro_escapo[1]
+    return nome_candidato
     
 def videos():
-    videos = Video.query.all()
+    videos = Video.query.order_by(Video.data_criacao.desc()).all()
     return render_template('videos.html', videos=videos)
 
 
 def video_lista():
-    videos = Video.query.all()
+    videos = Video.query.order_by(Video.data_criacao.desc()).all()
     endpoint = "https://api.plainlyvideos.com/api/v2/renders"
     headers = {
         "Content-Type": "application/json"

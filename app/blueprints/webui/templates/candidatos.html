@@ -16,13 +16,10 @@
     </div>
     <hr>
     <div class="row align-items-center py-1">
-        <div class="col-sm-2">
-            <label for=""><span class="fw-bold">Votos Nulos:</span> {{ municipio.nm_nulos}}</label>        
+        <div class="col-sm-3">
+            <label for=""><span class="fw-bold">Votos Brancos e Nulos:</span> {{ municipio.nm_brancos_nulos}}</label>        
         </div>
-        <div class="col-sm-2">
-            <label for=""><span class="fw-bold">Votos Brancos:</span> {{ municipio.nm_brancos}}</label>        
-        </div>
-        <div class="col-sm-2">
+        <div class="col-sm-3">
             <label for=""><span class="fw-bold">Abstenções:</span> {{ municipio.nm_abstencoes}}</label>        
         </div>
     </div>
@@ -48,7 +45,7 @@
                         <td>{{ candidato.sg_partido }}</td>
                         <td>{{ candidato.nm_partido.title() }}</td>
                         <td>{{ candidato.nr_votos }}</td>
-                        <td>{{ candidato.nr_votos * 100 }}%</td>
+                        <td>{{ '%0.2f'| format(candidato.nr_votos / municipio.nm_eleitores * 100|float) }}%</td>
                     </tr>
                     {% endfor %}
                 </tbody>

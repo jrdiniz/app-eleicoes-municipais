@@ -12,6 +12,8 @@ from app.blueprints.models import Municipio
 
 # SQLAlchemy
 from sqlalchemy.exc import IntegrityError
+import random
+import random
 
 def init_app(app):
     @app.cli.command()
@@ -126,4 +128,44 @@ def init_app(app):
             except IntegrityError:
                 db.session.rollback()
                 print(f"Município {municipio['NM_UE']} já existe no banco de dados.")
-                
+    
+    @app.cli.command()
+    def simulacao():
+        municipios = Municipio.query.all()
+        for municipio in municipios:
+            
+            # Simular abstencoes
+            random_abstencao = random.uniform(0.004, 0.010)
+            nm_abstencoes = municipio.nm_eleitores * random_abstencao
+            municipio.nm_abstencoes = int(nm_abstencoes)
+            
+            # Simular nulos e brancos
+            random_nulos = random.uniform(0.001, 0.006)
+            nm_brancos_nulos = (municipio.nm_eleitores - nm_abstencoes) * random_nulos
+            municipio.nm_brancos_nulos = int(nm_brancos_nulos)
+
+            print(municipio.nm_ue)
+            print(f"Total de Eleitores: {municipio.nm_eleitores}")
+            print(f"Votos Brancos e Nulos: {int(nm_brancos_nulos)}")
+            print(f"Votos Abstenções: {int(nm_abstencoes)}")
+
+            # Generate n-1 random break points based on the number of electors minus abstentions
+            break_points = sorted(random.sample(range(1, int(municipio.nm_eleitores) - int(nm_abstencoes)), len(municipio.candidatos) - 1))
+
+            # Add 0 and the remaining electors after abstentions as boundaries
+            break_points = [0] + break_points + [municipio.nm_eleitores - nm_abstencoes]
+
+            # Calculate the votes for each candidate by taking the difference between consecutive break points
+            votes = [break_points[i + 1] - break_points[i] for i in range(len(municipio.candidatos))]
+
+            total_votos_validos = 0
+            for index, candidato in enumerate(municipio.candidatos):
+                total_votos_validos += int(votes[index])
+                candidato.nr_votos = int(votes[index])
+                print(candidato.nm_urna_candidato, int(votes[index]))
+
+            print(f'Total Votos Válidos: {total_votos_validos}')
+            print(f"Simulação para {municipio.nm_ue} realizada com sucesso.")
+            
+            municipio.status_apuracao = True
+            db.session.commit()

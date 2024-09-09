@@ -1,6 +1,7 @@
 <div class="col-sm-12">
     <table class="table table-hover">
         <thead class="table-dark">
+            <th>Data de Criação</th>
             <th>Título</th>
             <th>Processamento</th>
             <th>ID Plainly</th>
@@ -19,6 +20,7 @@
             {% else %}
             <tr>
             {% endif %}
+                <td>{{ video.data_criacao.strftime('%d/%m/%Y %H:%M') }}</td>
                 <td>{{ video.titulo }}</td>
                 <td>
                     {% if video.plainly_state == "DONE" %}
