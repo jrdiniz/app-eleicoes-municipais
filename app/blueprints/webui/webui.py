@@ -34,7 +34,14 @@ def candidatos(municipio_id):
 
 def criar_artigo(municipio_id):
     municipio = Municipio.query.filter_by(id=municipio_id).first_or_404()
-    return render_template("artigo.html", municipio = municipio)
+    candidatos = Candidato.query.filter(Candidato.municipio_id == municipio_id).order_by(Candidato.nr_votos.desc()).all()
+    for i, candidato in enumerate(candidatos, start=1):
+        if (candidato.nr_votos / municipio.nm_eleitores * 100) >= 50.01:
+            segundo_turno = False
+            break
+        else:
+            segundo_turno = True
+    return render_template("artigo.html", municipio = municipio, candidatos = candidatos,segundo_turno = segundo_turno)
 
 
 def export_to_csv():
@@ -124,6 +131,9 @@ def criar_video(municipio_id):
     parameters[f"urnasApuradas"] = "Eleição matematicamente definida"
     
     parameters[f"cidade2"] = f"{municipio.nm_ue} - {municipio.sg_uf.upper()}"
+    if len(candidatos) >= 5:
+        parameters[f"cidade3"] = f"{municipio.nm_ue} - {municipio.sg_uf.upper()}"
+    
     for i, candidato in enumerate(candidatos, start=1):
         parameters[f"candidato{i}Nome"] = quebrar_linha(candidato.nm_urna_candidato)
         parameters[f"candidato{i}Partido"] = candidato.sg_partido
@@ -134,18 +144,20 @@ def criar_video(municipio_id):
     for i, candidato in enumerate(candidatos, start=1):
         if (candidato.nr_votos / municipio.nm_eleitores * 100) >= 50.01:
             parameters[f"turnoResultado"] = "Não haverá segundo turno"
+            parameters[f"indicadorEleito"] = "100"
             break
         else:
             parameters[f"turnoResultado"] = "Haverá segundo turno"
+            parameters[f"indicador2Turno"] = "100"
     
     # Abstenções
-    parameters[f"abstencoesPercentual"] = f"{municipio.nm_abstencoes / municipio.nm_eleitores * 100:.2f} %"
-    parameters[f"abstencoesTotal"] = f"{municipio.nm_abstencoes}"
+    parameters[f"abstencaoPercentual"] = f"{municipio.nm_abstencoes / municipio.nm_eleitores * 100:.2f} %"
+    parameters[f"abstencaoTotal"] = f"{municipio.nm_abstencoes}"
     
     # Brancos e Nulos
     parameters[f"brancosNulosPercentual"] = f"{(municipio.nm_brancos_nulos) / municipio.nm_eleitores * 100:.2f} %"
     parameters[f"brancosNulosTotal"] = f"{municipio.nm_brancos_nulos} votos"
-    
+
     
     endpoint = "https://api.plainlyvideos.com/api/v2/renders"
     headers = {
@@ -154,7 +166,7 @@ def criar_video(municipio_id):
     data = {
         "projectId": f"{template['projectId']}",
         "templateId":  f"{template['templateId']}",
-        "parameters": parameters
+        "parameters": parameters,
     }
     
     auth = HTTPBasicAuth(current_app.config["PLAINLY_API_KEY"], '')
@@ -176,7 +188,8 @@ def criar_video(municipio_id):
         plainly_id=response.json()['id'],
         plainly_state=response.json()['state'],
         plainly_template_name=response.json()['projectName'],
-        plainly_template_id=response.json()['projectId']
+        plainly_template_id=response.json()['projectId'],
+        plainly_thumbnail_uri=""
     )
     db.session.add(video)
     db.session.commit()
@@ -224,8 +237,8 @@ def pegar_template(nm_candidatos):
             'nm_candidados': 9
         },
         {
-            'projectId': '',
-            'id': "1b65627d-c5f8-46b6-8912-272f8bbccacc",
+            'projectId': '90e73e3d-2c18-47d2-a49d-bf9cb6513518',
+            'templateId': "7df8aa80-0831-4633-8a08-ed0e5c89b8dc",
             'nm_candidados': 10
         }
     ]
@@ -262,6 +275,7 @@ def video_lista():
             )
             video.plainly_state = response.json()['state']
             video.plainly_url = response.json()['output']
+            video.plainly_thumbnail_uri=response.json()['thumbnailUris']
             db.session.commit()
             
     return render_template('partials/_video_lista.html', videos = videos)

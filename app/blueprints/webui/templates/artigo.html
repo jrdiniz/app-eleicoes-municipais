@@ -14,7 +14,17 @@
 
     <div class="row">
         <div class="col-sm-12">
-            <h3>Eleições Municipais em {{ municipio.nm_ue.title() }} ({{ municipio.sg_uf }}): Resultado do 1º turno para Prefeito</h3>
+            {% if segundo_turno %}
+            <h3>{{ candidatos[0].nm_urna_candidato.title() }} ({{candidatos[0].sg_partido}}) e {{ candidatos[1].nm_urna_candidato.title() }} ({{candidatos[1].sg_partido}}) disputarão o 2º turno em {{ municipio.nm_ue.title() }} ({{ municipio.sg_uf }})</h3>
+            <p>
+                Candidato do {{ candidatos[0].nm_urna_candidato.title() }} obteve [XX%] dos votos válidos, contra [XX%] do candidato do {{ candidatos[1].nm_urna_candidato.title() }}.
+            </p>
+            {% else %}
+            <h3>{{ candidatos[0].nm_urna_candidato.title() }} ({{candidatos[0].sg_partido}}) é eleito prefeito em {{ municipio.nm_ue.title() }} ({{ municipio.sg_uf }}) no 1° turno das Eleições 2024</h3>
+            
+
+            {% endif %}
+
             <p>Saiba como os eleitores do município de {{ municipio.nm_ue.title() }} votaram para a prefeitura nas Eleições Municipais de 2024, realizadas no domingo, 6 de outubro de 2024.</p>
 
             <p>No município de {{ municipio.nm_ue.title() }} ({{ municipio.sg_uf }}), não haverá segundo turno, já que o candidato [Nome do Candidato] ([Sigla do Partido]) obteve [XX%] dos votos, alcançando mais de 50% + 1 voto do total de eleitores que participaram do pleito municipal de 2024.</p>
@@ -24,7 +34,7 @@
             <p>Confira abaixo como cada candidato à prefeitura de {{ municipio.nm_ue.title() }} ({{ municipio.sg_uf }}) se saiu:</p>
 
             <ul>
-                {% for candidato in municipio.candidatos %}
+                {% for candidato in municipio.candidatos | sort(attribute='nr_votos', reverse = True) %}
                 <li>{{ candidato.nm_urna_candidato.title() }} ({{ candidato.sg_partido}}): {{ candidato.nr_votos}} dos votos</li>
                 {% endfor %}
             </ul>

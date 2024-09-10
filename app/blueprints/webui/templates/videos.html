@@ -55,9 +55,10 @@
                                 {% endif %}
                             </td>
                             <td>{{ video.plainly_id }}</td>
-                            <td>
+                            <td class="col-2">
                                 {% if video.plainly_state == "DONE" %}
-                                    <a href="{{ video.plainly_url }}" target="_blank">Ver Vídeo</a>
+                                    <a class="btn btn-dark btn-sm" href="{{ video.plainly_url }}" target="_blank">Vídeo</a>
+                                    <a class="btn btn-dark btn-sm" href="{{ video.plainly_thumbnail_uri }}" target="_blank">Thumbnail</a>
                                 {% endif %}
                             </td>
                         </tr>

@@ -132,9 +132,10 @@ class Video(db.Model):
     plainly_state = db.Column(db.String(25), nullable=True)
     plainly_template_name = db.Column(db.String(255), nullable=True)
     plainly_template_id = db.Column(db.String(255), nullable=True)
+    plainly_thumbnail_uri = db.Column(db.Text, nullable=True)
     municipio_id = db.Column(db.String(35), nullable=False, index=True)
     
-    def __init__(self, titulo, descricao, data_criacao, plainly_id, plainly_url, plainly_state, plainly_template_name, plainly_template_id, municipio_id):
+    def __init__(self, titulo, descricao, data_criacao, plainly_id, plainly_url, plainly_state, plainly_template_name, plainly_template_id, municipio_id, plainly_thumbnail_uri):
         self.titulo = titulo
         self.descricao = descricao
         self.data_criacao = data_criacao
@@ -143,4 +144,5 @@ class Video(db.Model):
         self.plainly_state = plainly_state
         self.plainly_template_id = plainly_template_id
         self.plainly_template_name = plainly_template_name
+        self.plainly_thumbnail_uri = plainly_thumbnail_uri
         self.municipio_id = municipio_id
