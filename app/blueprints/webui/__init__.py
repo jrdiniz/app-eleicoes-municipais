@@ -8,6 +8,8 @@ from .webui import criar_artigo
 from .webui import export_to_csv
 from .webui import criar_video
 from .webui import video_lista
+from .webui import delete_video
+from .webui import criar_feed
 from .webui import tse
 
 # Register blueprints
@@ -40,6 +42,12 @@ bp.add_url_rule("/videos", view_func=videos)
 # Updade Plainly State
 video_lista.methods = ["GET"]
 bp.add_url_rule("/video/lista", view_func=video_lista)
+
+delete_video.methods = ["GET"]
+bp.add_url_rule("/video/delete/<video_id>", view_func=delete_video)
+
+criar_feed.methods = ["GET"]
+bp.add_url_rule("/feed", view_func=criar_feed)
 
 # TSE Test
 tse.methods = ["GET"]

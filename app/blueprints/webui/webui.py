@@ -1,6 +1,7 @@
 import csv
 import requests
 import datetime
+import pytz
 from requests.auth import HTTPBasicAuth
 
 from flask import Flask
@@ -22,6 +23,8 @@ from app.extensions.database import db
 # SQLAlchemy
 from sqlalchemy import func
 
+# XML
+import xml.etree.ElementTree as ET
 
 def index():
     municipios = db.session.query(Municipio.id, Municipio.nm_ue, Municipio.sg_uf, Municipio.nm_eleitores, Municipio.status_apuracao, func.count(Candidato.sq_candidato).label('nm_candidatos')).join(Candidato).group_by(Municipio.id).order_by(Municipio.nm_eleitores.desc()).all()
@@ -167,8 +170,12 @@ def criar_video(municipio_id):
         "projectId": f"{template['projectId']}",
         "templateId":  f"{template['templateId']}",
         "parameters": parameters,
+        "options": {
+            "integrations": {
+                "passthrough": f"Resultado Eleições Municípais em {municipio.nm_ue.title()} - {municipio.sg_uf.upper()}",
+            }
+        }
     }
-    
     auth = HTTPBasicAuth(current_app.config["PLAINLY_API_KEY"], '')
     
     
@@ -207,8 +214,8 @@ def pegar_template(nm_candidatos):
             'nm_candidados': 3
         },
         {
-            'projectId': '18bc9797-0eb0-4d3f-b07b-7087ac0d9bbb',
-            'templateId': "ef0eaf38-0d36-4c9f-9e58-e981fe7714d4",
+            'projectId': 'd889a065-eba5-4bb9-901e-d0e31727284a',
+            'templateId': "e0091f83-ef0e-40a5-a8a2-2af459c74e47",
             'nm_candidados': 4
         },
         {
@@ -280,6 +287,76 @@ def video_lista():
             
     return render_template('partials/_video_lista.html', videos = videos)
 
+
+def delete_video(video_id):
+    video = Video.query.get(video_id)
+    db.session.delete(video)
+    db.session.commit()
+    return redirect(url_for('webui.videos'))
+
+def criar_feed():
+    videos = Video.query.order_by(Video.data_criacao.desc()).all()
+    rss_datetime = datetime.datetime.now(pytz.timezone("America/Sao_Paulo"))
+
+    rss = ET.Element("rss")
+    rss.set("xmlns:dc", "http://purl.org/dc/elements/1.1/")
+    rss.set("xmlns:media", "http://search.yahoo.com/mrss/")
+    rss.set("version", "2.0")
+
+    channel = ET.SubElement(rss, "channel")
+
+    title = ET.SubElement(channel, "title")
+    title.text = "Feed Resultado Eleições Municipais"
+
+    description = ET.SubElement(channel, "description")
+    description.text = "Feed importação dos vídeos gerados de forma automática"
+
+    link = ET.SubElement(channel, "link")
+    link.text = f"{request.host_url}rss"
+
+    lastBuildDate = ET.SubElement(channel, "lastBuildDate")
+    lastBuildDate.text = rss_datetime.strftime("%a, %d %b %Y %H:%M:%S %z")
+
+    for video in videos:
+        if video.plainly_state == 'DONE':
+            tz = pytz.timezone("America/Sao_Paulo")
+            # Item
+            item = ET.SubElement(channel, "item")
+            item_title = ET.SubElement(item, "title")
+            item_title.text = video.titulo
+
+            item_link = ET.SubElement(item, "link")
+            item_link.text = f"{video.plainly_url}"
+
+            item_guid = ET.SubElement(item, "guid")
+            item_guid.set("isPermaLink", "false")
+            item_guid.text = video.plainly_id
+
+            item_description = ET.SubElement(item, "description")
+            item_description.text = video.descricao
+
+            item_category = ET.SubElement(item, "category")
+            item_category.text = f"eleições"
+
+            item_pubdate = ET.SubElement(item, "pubDate")
+            item_pubdate.text = (
+                video.data_criacao.strftime("%a, %d %b %Y %H:%M:%S") + " -0300"
+            )
+
+            item_media_content = ET.SubElement(item, "media:content")
+            item_media_content.set(
+                "url", f"{video.plainly_url}"
+            )
+            item_media_content.set("type", "video/mp4")
+            item_media_content.set("duration", "57")
+
+            item_media_thumbnail = ET.SubElement(item_media_content, "media:thumbnail")
+            item_media_thumbnail.set("url", video.plainly_thumbnail_uri)
+
+    return Response(
+        ET.tostring(rss, encoding="utf-8", xml_declaration=True),
+        mimetype="application/xml",
+    )   
 
 def tse():
     data = {
