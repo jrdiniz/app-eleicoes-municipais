@@ -409,8 +409,8 @@ def gerar_todos_os_thumbs():
             db.session.add(thumb)
             db.session.commit()
             
-            time.sleep(30)
-           """  response = requests.get(
+            time.sleep(10)
+            """  response = requests.get(
                     f"{endpoint}/{thumb.plainly_id}",
                     headers=headers,
                     auth=auth
@@ -424,3 +424,27 @@ def gerar_todos_os_thumbs():
 def thumbs_list():
     thumbs = Thumb.query.all()
     return render_template('thumbs.html', thumbs=thumbs)
+
+
+def thumbs_update():
+    thumbs = Thumb.query.all()
+    for thumb in thumbs:
+        
+        if thumb.plainly_thumbnail_uri is None or thumb.plainly_thumbnail_uri == "":    
+            endpoint = "https://api.plainlyvideos.com/api/v2/renders"
+            headers = {
+                "Content-Type": "application/json"
+            }
+            auth = HTTPBasicAuth(current_app.config["PLAINLY_API_KEY"], '')
+
+            response = requests.get(
+                f"{endpoint}/{thumb.plainly_id}",
+                headers=headers,
+                auth=auth
+            )
+
+            thumb.plainly_thumbnail_uri=response.json()['thumbnailUris']
+            db.session.commit()
+            time.sleep(5)
+            
+    return redirect(url_for('webui.thumbs_list'))

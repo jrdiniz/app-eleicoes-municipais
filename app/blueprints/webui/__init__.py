@@ -13,6 +13,7 @@ from .webui import criar_feed
 from .webui import gerar_todos_os_thumbs
 from .webui import thumbs
 from .webui import thumbs_list
+from .webui import thumbs_update
 
 # Register blueprints
 bp = Blueprint("webui", __name__, template_folder="templates", static_folder="static")
@@ -59,6 +60,9 @@ bp.add_url_rule("/thumbs/api", view_func=thumbs)
 
 thumbs_list.methods = ["GET"]
 bp.add_url_rule("/thumbs/lista", view_func=thumbs_list)
+
+thumbs_update.methods = ["GET"]
+bp.add_url_rule("/thumbs/update", view_func=thumbs_update)
 
 def init_app(app):
     with app.app_context():

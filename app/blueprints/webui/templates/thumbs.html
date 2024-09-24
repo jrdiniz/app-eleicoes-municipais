@@ -26,6 +26,7 @@
                 <thead>
                     <th>Estado</th>
                     <th>Município</th>
+                    <th>Thumb</th>
                     <th></th>
                 </thead>
                 <tbody>
@@ -33,6 +34,8 @@
                     {% if thumb.plainly_thumbnail_uri %}
                     <tr>
                         <td>{{ thumb.municipio_id }}</td>
+                        <td></td>
+                        <td><img class="img-thumbnail" src="{{ thumb.plainly_thumbnail_uri }}" alt="" srcset=""></td>
                         <td>
                             <a href="" class="btn btn-primary">Ver Thumb</a>
                         </td>
