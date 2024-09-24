@@ -5,3 +5,4 @@ bind = "0.0.0.0:{{port}}"
 accesslog = "access.log"
 errorlog = "error.log"
 loglevel = "info"
+threads = 4

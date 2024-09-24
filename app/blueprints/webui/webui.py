@@ -14,6 +14,7 @@ from flask import render_template
 from flask import current_app
 from flask import jsonify
 from io import StringIO
+from concurrent.futures import ThreadPoolExecutor
 
 from app.blueprints.models import Candidato
 from app.blueprints.models import Municipio
@@ -373,51 +374,63 @@ def thumbs():
             result.append(item)
     return jsonify(result)
 
+def processar_thumb(municipio):
+    thumb = Thumb.query.filter_by(municipio_id=municipio.id).one_or_none()
+    if thumb is None:
+        parameters = {}
+        parameters["cidade"] = municipio.nm_ue
+        
+        endpoint = "https://api.plainlyvideos.com/api/v2/renders"
+        headers = {
+            "Content-Type": "application/json"
+        }
+        data = {
+            "projectId": f"b0617d4d-b3cf-4da3-86c3-b68a2e69441a",
+            "templateId":  f"c9552045-f7d4-46e1-b688-be89a1fb4acd",
+            "parameters": parameters,
+        }
+        auth = HTTPBasicAuth(current_app.config["PLAINLY_API_KEY"], '')
+
+        # Primeira requisição para criar o render
+        response = requests.post(
+            endpoint,
+            headers=headers,
+            json=data,
+            auth=auth
+        )
+        
+        # Salvando o novo thumb
+        thumb = Thumb(
+            municipio_id=municipio.id,
+            plainly_id=response.json()['id'],
+            plainly_state=response.json()['state'],
+            plainly_thumbnail_uri=""
+        )
+        db.session.add(thumb)
+        db.session.commit()
+        
+        # Aguarda 45 segundos antes de buscar o thumbnail
+        time.sleep(45)
+        
+        # Segunda requisição para obter o thumbnail
+        response = requests.get(
+            f"{endpoint}/{thumb.plainly_id}",
+            headers=headers,
+            auth=auth
+        )
+        
+        thumb.plainly_thumbnail_uri = response.json()['thumbnailUris']
+        db.session.commit()
+
 def gerar_todos_os_thumbs():
     municipios = Municipio.query.all()
     
-    for municipio in municipios:
-        thumb = Thumb.query.filter_by(municipio_id=municipio.id).one_or_none()
-        if thumb is None:
-        
-            parameters = {}
-            parameters["cidade"] = municipio.nm_ue
-            
-            endpoint = "https://api.plainlyvideos.com/api/v2/renders"
-            headers = {
-                "Content-Type": "application/json"
-            }
-            data = {
-                "projectId": f"b0617d4d-b3cf-4da3-86c3-b68a2e69441a",
-                "templateId":  f"c9552045-f7d4-46e1-b688-be89a1fb4acd",
-                "parameters": parameters,
-            }
-            auth = HTTPBasicAuth(current_app.config["PLAINLY_API_KEY"], '')
-            
-            response = requests.post(
-                endpoint, 
-                headers=headers, 
-                json=data, 
-                auth=auth
-            )
-            thumb = Thumb(
-                municipio_id=municipio.id,
-                plainly_id=response.json()['id'],
-                plainly_state=response.json()['state'],
-                plainly_thumbnail_uri=""
-            )
-            db.session.add(thumb)
-            db.session.commit()
-            
-            time.sleep(60)
-            response = requests.get(
-                    f"{endpoint}/{thumb.plainly_id}",
-                    headers=headers,
-                    auth=auth
-                )
-            
-            thumb.plainly_thumbnail_uri=response.json()['thumbnailUris']
-            db.session.commit()
-        
+    # Definindo o número máximo de threads
+    max_workers = 4
+    
+    # Usando ThreadPoolExecutor para multithreading
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        # Submetendo cada tarefa para execução paralela
+        executor.map(processar_thumb, municipios)
+    
     return render_template('thumbs.html', municipios=municipios)
-
