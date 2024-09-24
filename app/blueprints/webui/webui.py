@@ -409,7 +409,7 @@ def gerar_todos_os_thumbs():
             db.session.add(thumb)
             db.session.commit()
             
-            time.sleep(5)
+            time.sleep(30)
            """  response = requests.get(
                     f"{endpoint}/{thumb.plainly_id}",
                     headers=headers,
