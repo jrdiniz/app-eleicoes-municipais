@@ -409,15 +409,15 @@ def gerar_todos_os_thumbs():
             db.session.add(thumb)
             db.session.commit()
             
-            time.sleep(60)
-            response = requests.get(
+            time.sleep(5)
+           """  response = requests.get(
                     f"{endpoint}/{thumb.plainly_id}",
                     headers=headers,
                     auth=auth
                 )
             
             thumb.plainly_thumbnail_uri=response.json()['thumbnailUris']
-            db.session.commit()
+            db.session.commit() """
         
     return redirect(url_for('webui.thumbs_list'))
 
