@@ -10,7 +10,8 @@ from .webui import criar_video
 from .webui import video_lista
 from .webui import delete_video
 from .webui import criar_feed
-from .webui import tse
+from .webui import gerar_todos_os_thumbs
+from .webui import thumbs
 
 # Register blueprints
 bp = Blueprint("webui", __name__, template_folder="templates", static_folder="static")
@@ -49,10 +50,11 @@ bp.add_url_rule("/video/delete/<video_id>", view_func=delete_video)
 criar_feed.methods = ["GET"]
 bp.add_url_rule("/feed", view_func=criar_feed)
 
-# TSE Test
-tse.methods = ["GET"]
-bp.add_url_rule("/tse", view_func=tse)
+gerar_todos_os_thumbs.methods = ["GET"]
+bp.add_url_rule("/thumbs", view_func=gerar_todos_os_thumbs)
 
+thumbs.methods = ["GET"]
+bp.add_url_rule("/thumbs/lista", view_func=thumbs)
 
 def init_app(app):
     with app.app_context():

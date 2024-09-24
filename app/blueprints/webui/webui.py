@@ -1,4 +1,5 @@
 import csv
+import time
 import requests
 import datetime
 import pytz
@@ -18,6 +19,7 @@ from app.blueprints.models import Candidato
 from app.blueprints.models import Municipio
 from app.blueprints.models import Artigo
 from app.blueprints.models import Video
+from app.blueprints.models import Thumb
 from app.extensions.database import db
 
 # SQLAlchemy
@@ -356,215 +358,66 @@ def criar_feed():
     return Response(
         ET.tostring(rss, encoding="utf-8", xml_declaration=True),
         mimetype="application/xml",
-    )   
+    )
 
-def tse():
-    data = {
-        "ele": "00001",
-        "t": "1",
-        "f": "2",
-        "sup": "n",
-        "tpabr": "mu",
-        "cdabr": "00000",
-        "dg": "06/10/2024",
-        "hg": "18:00:01",
-        "dv": "{s|n}",
-        "dt": "{dd/mm/aaaa}",
-        "ht": "{hh:mm:ss}",
-        "tf": "{s|n}",
-        "and": "{n|p|f}",
-        "md": "{e|s|n}",
-        "esae": "{s|n}",
-        "mnae": [
-            "{texto}"
-        ],
-        "carg": [
-            {
-                "cd": "{inteiro}",
-                "nmn": "{texto}",
-                "nmm": "{texto}",
-                "nmf": "{texto}",
-                "nv": "{inteiro}",
-                "fed": [
-                    {
-                        "n": "{inteiro}",
-                        "nm": "{texto}",
-                        "sg": "{texto}",
-                        "com": "{texto}",
-                        "npar": [
-                            "{inteiro}"
-                        ]
-                    }
-                ],
-                "agr": [
-                    {
-                        "n": "{inteiro}",
-                        "nm": "{texto}",
-                        "tp": "{c|i|f}",
-                        "tvtn": "{inteiro}",
-                        "tvtl": "{inteiro}",
-                        "tvan": "{inteiro}",
-                        "tval": "{inteiro}",
-                        "vag": "{inteiro}",
-                        "com": "{texto}",
-                        "par": [
-                            {
-                                "n": "{inteiro}",
-                                "sg": "{texto}",
-                                "nm": "{texto}",
-                                "nfed": "{inteiro}",
-                                "tvtn": "{inteiro}",
-                                "tvtl": "{inteiro}",
-                                "tvan": "{inteiro}",
-                                "tval": "{inteiro}",
-                                "cand": [
-                                    {
-                                        "n": "{inteiro}",
-                                        "sqcand": "{inteiro}",
-                                        "nm": "{texto}",
-                                        "nmu": "{texto}",
-                                        "dt": "{dd/mm/aaaa}",
-                                        "dvt": "{texto}",
-                                        "seq": "{inteiro}",
-                                        "e": "{s|n}",
-                                        "st": "{texto}",
-                                        "vap": "{inteiro}",
-                                        "pvap": "{decimal}",
-                                        "pvapn": "{decimal}",
-                                        "vs": [
-                                            {
-                                                "tp": "{v|s1|s2}",
-                                                "sqcand": "{inteiro}",
-                                                "nm": "{texto}",
-                                                "nmu": "{texto}",
-                                                "sgp": "{texto}"
-                                            }
-                                        ],
-                                        "subs": [
-                                            {
-                                                "nm": "{texto}",
-                                                "nmu": "{texto}",
-                                                "sgp": "{texto}"
-                                            }
-                                        ]
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                ]
-            }
-        ],
-        "perg": [
-            {
-                "cd": "{inteiro}",
-                "ds": "{texto}",
-                "resp": [
-                    {
-                        "n": "{inteiro}",
-                        "ds": "{texto}",
-                        "seq": "{inteiro}",
-                        "e": "{s|n}",
-                        "st": "{texto}",
-                        "vap": "{inteiro}",
-                        "pvap": "{decimal}",
-                        "pvapn": "{decimal}"
-                    }
-                ]
-            }
-        ],
-        "s": {
-            "ts": "{inteiro}",
-            "st": "{inteiro}",
-            "pst": "{decimal}",
-            "pstn": "{decimal}",
-            "snt": "{inteiro}",
-            "psnt": "{decimal}",
-            "psntn": "{decimal}",
-            "si": "{inteiro}",
-            "psi": "{decimal}",
-            "psin": "{decimal}",
-            "sni": "{inteiro}",
-            "psni": "{decimal}",
-            "psnin": "{decimal}",
-            "sa": "{inteiro}",
-            "psa": "{decimal}",
-            "psan": "{decimal}",
-            "sna": "{inteiro}",
-            "psna": "{decimal}",
-            "psnan": "{decimal}"
-        },
-        "e": {
-            "te": "{inteiro}",
-            "est": "{inteiro}",
-            "pest": "{decimal}",
-            "pestn": "{decimal}",
-            "esnt": "{inteiro}",
-            "pesnt": "{decimal}",
-            "pesntn": "{decimal}",
-            "esi": "{inteiro}",
-            "pesi": "{decimal}",
-            "pesin": "{decimal}",
-            "esni": "{inteiro}",
-            "pesni": "{decimal}",
-            "pesnin": "{decimal}",
-            "esa": "{inteiro}",
-            "pesa": "{decimal}",
-            "pesan": "{decimal}",
-            "esna": "{inteiro}",
-            "pesna": "{decimal}",
-            "pesnan": "{decimal}",
-            "c": "{inteiro}",
-            "pc": "{decimal}",
-            "pcn": "{decimal}",
-            "a": "{inteiro}",
-            "pa": "{decimal}",
-            "pan": "{decimal}"
-        },
-        "v": {
-            "tv": "{inteiro}",
-            "vvc": "{inteiro}",
-            "pvvc": "{decimal}",
-            "pvvcn": "{decimal}",
-            "vv": "{inteiro}",
-            "pvv": "{decimal}",
-            "pvvn": "{decimal}",
-            "vl": "{inteiro}",
-            "pvl": "{decimal}",
-            "pvln": "{decimal}",
-            "vnom": "{inteiro}",
-            "pvnom": "{decimal}",
-            "pvnomn": "{decimal}",
-            "van": "{inteiro}",
-            "pvan": "{decimal}",
-            "pvann": "{decimal}",
-            "vansj": "{inteiro}",
-            "pvansj": "{decimal}",
-            "pvansjn": "{decimal}",
-            "vscv": "{inteiro}",
-            "vb": "{inteiro}",
-            "pvb": "{decimal}",
-            "pvbn": "{decimal}",
-            "tvn": "{inteiro}",
-            "ptvn": "{decimal}",
-            "ptvnn": "{decimal}",
-            "vn": "{inteiro}",
-            "pvn": "{decimal}",
-            "pvnn": "{decimal}",
-            "vnt": "{inteiro}",
-            "pvnt": "{decimal}",
-            "pvntn": "{decimal}"
-        }
-    }
+def thumbs():
+    thumbs = Thumb.query.all()
     
-    result = {
-        'turno': data['t'],
-        'totalizacao_final': data['tf'],
-        'matematicamente_definido': data['md'],
-        'numero_federacao': data['carg'][0]['fed'][0]['n'],
-        'sigla_federacao': data['carg'][0]['fed'][0]['sg'],
-        'nome_federecao': data['carg'][0]['fed'][0]['nm'],
+    result = []
+    for thumb in thumbs:
+        if thumb.plainly_thumbnail_uri:
+            item = {}
+            municipio = Municipio.query.filter_by(id=thumb.municipio_id).one_or_none()
+            item['municipio'] = municipio.nm_ue.lower()
+            item['plainly_thumbnail_uri'] = thumb.plainly_thumbnail_uri
+            result.append(item)
+    return jsonify(result)
 
-    }
-    return jsonify (result)
-    #return current_app.send_static_file("json/tse.json")
+def gerar_todos_os_thumbs():
+    municipios = Municipio.query.all()
+    
+    for municipio in municipios:
+        thumb = Thumb.query.filter_by(municipio_id=municipio.id).one_or_none()
+        if thumb is None:
+        
+            parameters = {}
+            parameters["cidade"] = municipio.nm_ue
+            
+            endpoint = "https://api.plainlyvideos.com/api/v2/renders"
+            headers = {
+                "Content-Type": "application/json"
+            }
+            data = {
+                "projectId": f"b0617d4d-b3cf-4da3-86c3-b68a2e69441a",
+                "templateId":  f"c9552045-f7d4-46e1-b688-be89a1fb4acd",
+                "parameters": parameters,
+            }
+            auth = HTTPBasicAuth(current_app.config["PLAINLY_API_KEY"], '')
+            
+            response = requests.post(
+                endpoint, 
+                headers=headers, 
+                json=data, 
+                auth=auth
+            )
+            thumb = Thumb(
+                municipio_id=municipio.id,
+                plainly_id=response.json()['id'],
+                plainly_state=response.json()['state'],
+                plainly_thumbnail_uri=""
+            )
+            db.session.add(thumb)
+            db.session.commit()
+            
+            time.sleep(120)
+            response = requests.get(
+                    f"{endpoint}/{thumb.plainly_id}",
+                    headers=headers,
+                    auth=auth
+                )
+            
+            thumb.plainly_thumbnail_uri=response.json()['thumbnailUris']
+            db.session.commit()
+        
+    return render_template('thumbs.html', municipios=municipios)
+

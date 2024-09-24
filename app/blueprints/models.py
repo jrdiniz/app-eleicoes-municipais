@@ -146,3 +146,18 @@ class Video(db.Model):
         self.plainly_template_name = plainly_template_name
         self.plainly_thumbnail_uri = plainly_thumbnail_uri
         self.municipio_id = municipio_id
+        
+        
+class Thumb(db.Model):
+    __tablename__ = "thumb"
+    id = db.Column(db.String(36), primary_key=True, nullable=False, unique=True, index=True, default=lambda: str(uuid.uuid4().hex))
+    plainly_thumbnail_uri = db.Column(db.Text, nullable=False)
+    plainly_id = db.Column(db.String(36), nullable=True)
+    plainly_state = db.Column(db.String(25), nullable=True)
+    municipio_id = db.Column(db.String(35), nullable=False, index=True)
+    
+    def __init__(self, plainly_thumbnail_uri, plainly_id, plainly_state, municipio_id):
+        self.plainly_thumbnail_uri = plainly_thumbnail_uri
+        self.plainly_id = plainly_id
+        self.plainly_state = plainly_state
+        self.municipio_id = municipio_id
