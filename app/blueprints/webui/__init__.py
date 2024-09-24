@@ -12,6 +12,7 @@ from .webui import delete_video
 from .webui import criar_feed
 from .webui import gerar_todos_os_thumbs
 from .webui import thumbs
+from .webui import thumbs_list
 
 # Register blueprints
 bp = Blueprint("webui", __name__, template_folder="templates", static_folder="static")
@@ -54,7 +55,10 @@ gerar_todos_os_thumbs.methods = ["GET"]
 bp.add_url_rule("/thumbs", view_func=gerar_todos_os_thumbs)
 
 thumbs.methods = ["GET"]
-bp.add_url_rule("/thumbs/lista", view_func=thumbs)
+bp.add_url_rule("/thumbs/api", view_func=thumbs)
+
+thumbs_list.methods = ["GET"]
+bp.add_url_rule("/thumbs/lista", view_func=thumbs_list)
 
 def init_app(app):
     with app.app_context():

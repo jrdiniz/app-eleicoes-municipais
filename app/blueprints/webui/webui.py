@@ -419,5 +419,8 @@ def gerar_todos_os_thumbs():
             thumb.plainly_thumbnail_uri=response.json()['thumbnailUris']
             db.session.commit()
         
-    return render_template('thumbs.html', municipios=municipios)
+    return redirect(url_for('webui.thumbs_list'))
 
+def thumbs_list():
+    thumbs = Thumb.query.all()
+    return render_template('thumbs.html', thumbs=thumbs)
