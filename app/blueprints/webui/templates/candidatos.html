@@ -6,21 +6,12 @@
             <nav aria-label="breadcrumb">
                 <ol class="breadcrumb">
                   <li class="breadcrumb-item"><a href="{{ url_for('webui.index')}}">Home</a></li>
-                  <li class="breadcrumb-item active" aria-current="page">Candidatos do Município de {{ municipio.nm_ue.title() }}</li>
+                  <li class="breadcrumb-item active" aria-current="page">Candidatos do Município de {{ municipio.nome }}</li>
                 </ol>
             </nav>
         </div>
         <div class="col-sm-12">
-            <h1>Candidatos do Municipio de {{ municipio.nm_ue.title() }} - {{ municipio.sg_uf }}</h1>
-        </div>
-    </div>
-    <hr>
-    <div class="row align-items-center py-1">
-        <div class="col-sm-3">
-            <label for=""><span class="fw-bold">Votos Brancos e Nulos:</span> {{ municipio.nm_brancos_nulos}}</label>        
-        </div>
-        <div class="col-sm-3">
-            <label for=""><span class="fw-bold">Abstenções:</span> {{ municipio.nm_abstencoes}}</label>        
+            <h1>Candidatos do Municipio de {{ municipio.nome }} - {{ municipio.UF }}</h1>
         </div>
     </div>
     <hr>
@@ -29,23 +20,19 @@
             <table class="table">
                 <thead>
                     <th>Foto</th>
-                    <th>Nome do Candidato</th>
-                    <th>Número na Urna</th>
+                    <th>Nome na Urna</th>
+                    <th>Número Urna</th>
                     <th>Sigla do Partido</th>
-                    <th>Nome do Partido</th>
                     <th>Votos</th>
-                    <th>%</th>
                 </thead>
                 <tbody>
                     {% for candidato in candidatos %}
                     <tr>
-                        <td><img src="{{ url_for('static', filename='fotos' )}}/{{candidato.ft_candidato }}" alt="" srcset=""></td>
-                        <td>{{ candidato.nm_urna_candidato.title() }}</td>
-                        <td>{{ candidato.nr_partido }}</td>
-                        <td>{{ candidato.sg_partido }}</td>
-                        <td>{{ candidato.nm_partido.title() }}</td>
-                        <td>{{ candidato.nr_votos }}</td>
-                        <td>{{ '%0.2f'| format(candidato.nr_votos / municipio.nm_eleitores * 100|float) }}%</td>
+                        <td><img src="https://{{ candidato.foto }}" alt="" srcset=""></td>
+                        <td>{{ candidato.nome_urna.title() }}</td>
+                        <td>{{ candidato.nro }}</td>
+                        <td>{{ candidato.partido }}</td>
+                        <td>{{ candidato.votos_apurados }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>

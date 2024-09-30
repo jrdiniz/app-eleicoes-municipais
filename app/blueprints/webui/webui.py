@@ -17,7 +17,6 @@ from io import StringIO
 
 from app.blueprints.models import Candidato
 from app.blueprints.models import Municipio
-from app.blueprints.models import Artigo
 from app.blueprints.models import Video
 from app.blueprints.models import Thumb
 from app.extensions.database import db
@@ -29,99 +28,23 @@ from sqlalchemy import func
 import xml.etree.ElementTree as ET
 
 def index():
-    municipios = db.session.query(Municipio.id, Municipio.nm_ue, Municipio.sg_uf, Municipio.nm_eleitores, Municipio.status_apuracao, func.count(Candidato.sq_candidato).label('nm_candidatos')).join(Candidato).group_by(Municipio.id).order_by(Municipio.nm_eleitores.desc()).all()
+    municipios = db.session.query(Municipio).order_by(Municipio.total_votos.desc()).all()
     return render_template("index.html", municipios=municipios)
 
-def candidatos(municipio_id):
-    municipio = Municipio.query.filter_by(id=municipio_id).first_or_404()   
-    candidatos = Candidato.query.filter(Candidato.municipio_id == municipio_id).all()
+def candidatos(codigo_municipio):
+    municipio = Municipio.query.filter_by(codigo_municipio=codigo_municipio).first_or_404()   
+    candidatos = Candidato.query.filter(Candidato.codigo_municipio == codigo_municipio).all()
     return render_template("candidatos.html", candidatos=candidatos, municipio=municipio)
 
-def criar_artigo(municipio_id):
-    municipio = Municipio.query.filter_by(id=municipio_id).first_or_404()
-    candidatos = Candidato.query.filter(Candidato.municipio_id == municipio_id).order_by(Candidato.nr_votos.desc()).all()
-    for i, candidato in enumerate(candidatos, start=1):
-        if (candidato.nr_votos / municipio.nm_eleitores * 100) >= 50.01:
-            segundo_turno = False
-            break
-        else:
-            segundo_turno = True
-    return render_template("artigo.html", municipio = municipio, candidatos = candidatos,segundo_turno = segundo_turno)
-
-
-def export_to_csv():
-    # Numero maximo de candidatos por municipio
-    MAX_CANDIDATOS = 10
-
-    # Create a string buffer to write the CSV data
-    si = StringIO()
-    csvwriter = csv.writer(si)
-
-    # Create a header row with dynamic columns for each Candidato
-    header = [
-        'uf','municipio','nulos','brancos','abstencoes','status_apuracao'
-    ]
-    
-    for i in range(1, MAX_CANDIDATOS + 1):
-        header.extend([
-            f'candidato_{i}_numero', 
-            f'candidato_{i}_nome', 
-            f'candidato_{i}_ft', 
-            f'candidato_{i}_partido', 
-            f'candidato_{i}_total_votos', 
-            f'candidato_{i}_total_votos_percentual'
-        ])
-    
-    csvwriter.writerow(header)
-
-    # Query all municipios
-    municipios = Municipio.query.all()
-
-    for municipio in municipios:
-        row = [
-            municipio.sg_uf,
-            municipio.nm_ue,
-            municipio.nm_nulos,
-            municipio.nm_brancos,
-            municipio.nm_abstencoes,
-            municipio.status_apuracao
-        ]
-        
-        candidatos = Candidato.query.filter_by(municipio_id=municipio.id).order_by(Candidato.nr_votos.desc()).limit(MAX_CANDIDATOS).all()
-
-
-        for candidato in candidatos:
-            candidato_percentual = candidato.nr_votos / municipio.nm_eleitores * 100 if municipio.nm_eleitores > 0 else 0   
-            ft_candidato_url = f"{request.url_root}static/fotos/{candidato.ft_candidato}"
-            row.extend([
-                candidato.nr_candidato,
-                candidato.nm_urna_candidato,
-                f'{ft_candidato_url}',
-                candidato.sg_partido,
-                candidato.nr_votos,
-                f'{candidato_percentual}%'
-            ])
-        
-        csvwriter.writerow(row)
-
-    # Move the cursor of the StringIO buffer to the start
-    si.seek(0)
-
-    # Create a Flask Response object to download the CSV
-    response = Response(si.getvalue(), mimetype='text/csv')
-    response.headers.set('Content-Disposition', 'attachment', filename='municipio_candidato.csv')
-    
-    return response
-
-def criar_video(municipio_id):
-    municipio = Municipio.query.filter_by(id=municipio_id).first_or_404()
-    candidatos = Candidato.query.filter(Candidato.municipio_id == municipio_id).order_by(Candidato.nr_votos.desc()).all()
+def criar_video(codigo_municipio):
+    municipio = Municipio.query.filter_by(codigo_municipio=codigo_municipio).first_or_404()
+    candidatos = Candidato.query.filter(Candidato.codigo_municipio == codigo_municipio).all()
 
     # Pega as configurações do template conforme o número de candidatos
     template = pegar_template(len(candidatos))
         
     parameters = {}
-    parameters[f"cidade"] = municipio.nm_ue
+    parameters[f"cidade"] = municipio.nome
     
     # Determina se haverá segundo turno
     if municipio.segundo_turno:
@@ -135,16 +58,14 @@ def criar_video(municipio_id):
     # Status da Apuração
     parameters[f"urnasApuradas"] = "Eleição matematicamente definida"
     
-    parameters[f"cidade2"] = f"{municipio.nm_ue} - {municipio.sg_uf.upper()}"
-    if len(candidatos) >= 5:
-        parameters[f"cidade3"] = f"{municipio.nm_ue} - {municipio.sg_uf.upper()}"
+    parameters[f"cidade2"] = f"{municipio.nome} - {municipio.UF}"
     
     for i, candidato in enumerate(candidatos, start=1):
-        parameters[f"candidato{i}Nome"] = quebrar_linha(candidato.nm_urna_candidato)
-        parameters[f"candidato{i}Partido"] = candidato.sg_partido
-        parameters[f"candidato{i}Percentual"] = f"{candidato.nr_votos / municipio.nm_eleitores * 100:.2f} %"
-        parameters[f"candidato{i}Votos"] = f"{candidato.nr_votos} votos"
-        parameters[f"candidato{i}Foto"] = f"https://eleicoes.gorobei.net/static/fotos/{candidato.ft_candidato}"
+        parameters[f"candidato{i}Nome"] = quebrar_linha(candidato.nome_urna)
+        parameters[f"candidato{i}Partido"] = candidato.partido
+        parameters[f"candidato{i}Percentual"] = f"{candidato.percentual_votos_apurados} %"
+        parameters[f"candidato{i}Votos"] = f"{candidato.votos_apurados} votos"
+        parameters[f"candidato{i}Foto"] = f"{candidato.foto}"
     
     for i, candidato in enumerate(candidatos, start=1):
         if (candidato.nr_votos / municipio.nm_eleitores * 100) >= 50.01:
@@ -156,12 +77,19 @@ def criar_video(municipio_id):
             parameters[f"indicador2Turno"] = "100"
     
     # Abstenções
-    parameters[f"abstencaoPercentual"] = f"{municipio.nm_abstencoes / municipio.nm_eleitores * 100:.2f} %"
-    parameters[f"abstencaoTotal"] = f"{municipio.nm_abstencoes}"
+    parameters[f"abstencaoPercentual"] = f"{municipio.percentual_abstencao} %"
     
-    # Brancos e Nulos
-    parameters[f"brancosNulosPercentual"] = f"{(municipio.nm_brancos_nulos) / municipio.nm_eleitores * 100:.2f} %"
-    parameters[f"brancosNulosTotal"] = f"{municipio.nm_brancos_nulos} votos"
+    # Nulos
+    parameters[f"nulosPercentual"] = f"{municipio.percentual_votos_nulo} %"
+    parameters[f"nulosTotal"] = f"{municipio.votos_nulo} votos"
+    
+    # Brancos
+    parameters[f"brancosPercentual"] = f"{municipio.percentual_votos_branco} %"
+    parameters[f"brancosTotal"] = f"{municipio.votos_branco} votos"
+    
+    # Válidos
+    parameters[f"validosPercentual"] = f"{municipio.percentual_votos_validos} %"
+    parameters[f"validosTotal"] = f"{municipio.votos_validos} votos"
 
     
     endpoint = "https://api.plainlyvideos.com/api/v2/renders"
@@ -191,8 +119,8 @@ def criar_video(municipio_id):
     video = Video(
         municipio_id=municipio.id,
         data_criacao=datetime.datetime.now(),
-        titulo=f"Eleições Municípais: {municipio.nm_ue.title()} - {municipio.sg_uf.upper()}",
-        descricao=f"Confira o resultado da eleição para prefeito de {municipio.nm_ue.title()} - {municipio.sg_uf.upper()}",
+        titulo=f"Eleições Municípais: {municipio.nome} - {municipio.UF}",
+        descricao=f"Confira o resultado da eleição para prefeito de {municipio.nome} - {municipio.UF}",
         plainly_url=None,
         plainly_id=response.json()['id'],
         plainly_state=response.json()['state'],
@@ -448,3 +376,15 @@ def thumbs_update():
             time.sleep(5)
             
     return redirect(url_for('webui.thumbs_list'))
+
+
+def terra_json(nome_normalizado):
+    url = "https://p1-cloud.trrsf.com/api/eleicoes2024-api/resultados"
+    params = {
+        "municipio": nome_normalizado
+    }
+    headers = {
+        "Content-Type": "application/json"
+    }
+    response = requests.get(url, params=params, headers=headers)
+    return jsonify(response.json())

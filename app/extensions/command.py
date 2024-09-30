@@ -1,294 +1,198 @@
 import click
 import os
-import csv
 import re
-import shutil
-
-import pandas as pd
+import unidecode
+import requests
+import json
 
 from app.extensions.database import db
 from app.blueprints.models import Candidato
 from app.blueprints.models import Municipio
 
+from datetime import datetime
+
 # SQLAlchemy
 from sqlalchemy.exc import IntegrityError
-import random
-import random
 
 def init_app(app):
     @app.cli.command()
-    def import_candidatos():
-        municipios = db.session.query(Municipio).all()
-        
-        csv_file_path = "/home/juliano/apps/app-eleicoes-municipais/csv/consulta_cand_2024/consulta_cand_2024_BRASIL.csv"
-        df = pd.read_csv(csv_file_path, sep=";", encoding="ISO-8859-1")
-        
-        # Filtrar apenas candidatos a prefeito
-        df_prefeitos = df[df["DS_CARGO"] == "PREFEITO"]
-        
-        # Filtrar apenas as colunas que serão importadas para tables candidatos
-        df_prefeitos = df_prefeitos[["SQ_CANDIDATO", "NR_CANDIDATO", "NM_URNA_CANDIDATO", "SG_UF", "NM_UE", "NR_PARTIDO", "SG_PARTIDO", "NM_PARTIDO", "DS_CARGO"]]  
-        
-        # Converter df_prefeitos para uma lista de dicionários
-        prefeitos = df_prefeitos.to_dict("records")
-        
-        for municipio in municipios:
-            for prefeito in prefeitos:
-                try:
-                    if municipio.nm_ue == prefeito["NM_UE"] and municipio.sg_uf == prefeito["SG_UF"]:
-                        candidato = Candidato(
-                                sq_canditato=prefeito["SQ_CANDIDATO"],
-                                nr_candidato=prefeito["NR_CANDIDATO"],
-                                nm_urna_candidato=prefeito["NM_URNA_CANDIDATO"],
-                                nr_partido=prefeito["NR_PARTIDO"],
-                                sg_partido=prefeito["SG_PARTIDO"],
-                                nm_partido=prefeito["NM_PARTIDO"],
-                                ds_cargo=prefeito["DS_CARGO"],
-                                municipio_id=municipio.id,
-                                nr_votos=0,
-                                ft_candidato=update_candidatos_fotos(prefeito["SG_UF"], prefeito["SQ_CANDIDATO"])
-                            )
-                        db.session.add(candidato)
-                        db.session.commit()
-                        print(f"Candidato {prefeito['NM_URNA_CANDIDATO']} importado com sucesso.")
-                except IntegrityError:
-                    db.session.rollback()
-                    print(f"Candidato {prefeito['NM_URNA_CANDIDATO']} já existe no banco de dados.")
-                
-                
-                
-    @app.cli.command()
-    def import_candidatos_fotos():
-        fotos_file_path = "/home/juliano/apps/app-eleicoes-municipais/fotos/"
-        fotos_file_static = "/home/juliano/apps/app-eleicoes-municipais/app/static/fotos/"
-        for foto_file in os.listdir(fotos_file_path):
-            if foto_file.endswith(('.jpeg','jpg')):
-                # Regex para extrair o número do candidato do nome do arquivo da foto
-                match = re.search(r'FPE(\d+)_div', foto_file)
-                if match:
-                    sq_candidato = str(match.group(1)).strip()
-                    candidato = Candidato.query.filter_by(sq_candidato=sq_candidato).first()
-                    if candidato:
-                        candidato.ft_candidato = foto_file.strip() 
-                        db.session.commit()
-                        # copia a foto para a pasta static de candidatos
-                        shutil.copy(fotos_file_path + foto_file, fotos_file_static + foto_file)
-                        print(f"Foto do candidato importada com sucesso.")
-    
-    def update_candidatos_fotos(sg_uf, sg_candidato):
-        fotos_file_path = "/home/juliano/apps/app-eleicoes-municipais/app/static/fotos/"
-        for foto_file in os.listdir(fotos_file_path):
-            foto_file = f"F{sg_uf}{sg_candidato}_div{os.path.splitext(foto_file)[1]}"
-            print(foto_file)
-            # check if foto_file exists in filesystem
-            if os.path.exists(fotos_file_path + foto_file):
-                return foto_file
-            else:
-                return None
-               
-    @app.cli.command()           
-    def update_candidatos_fotos_none():
-        fotos_file_path = "/home/juliano/apps/app-eleicoes-municipais/app/static/fotos/"
-        candidatos = Candidato.query.filter_by(ft_candidato=None).all()
-        for candidato in candidatos:
-            ft_candidato = f"F{candidato.municipio.sg_uf}{candidato.sq_candidato}_div.jpeg"
-            if os.path.exists(fotos_file_path + ft_candidato):
-                print(f"Foto do candidato {candidato.nm_urna_candidato} encontrada, arquivo {ft_candidato}")
-                candidato.ft_candidato = ft_candidato
-                db.session.commit()
-            
-            """
-            for foto_file in os.listdir(fotos_file_path):
-                if os.path.exists(fotos_file_path + ft_candidato):
-                    print(f"Foto do candidato {candidato.nm_urna_candidato} encontrada, arquivo {foto_file}")
-                    foto_file = update_candidatos_fotos(candidato.municipio.sg_uf, candidato.sq_candidato)
-                    candidato.ft_candidato = foto_file
-                    db.session.commit()
-                else:
-                    print(f"Foto do candidato {candidato.nm_urna_candidato} não encontrada.")
-            """     
-    @app.cli.command()
-    def import_municipios():
-        municipios_file_path = "/home/juliano/apps/app-eleicoes-municipais/csv/200mil_eleitores_2.csv"
-        df = pd.read_csv(municipios_file_path, sep=";", encoding="ISO-8859-1")
-        municipios = df.to_dict("records")
-        
-        for municipio in municipios:
-            try:
-                data = Municipio(
-                        sg_uf=municipio["SG_UF"].upper(),
-                        nm_ue=municipio["NM_UE"].upper(),
-                        nm_eleitores=municipio["NM_ELEITORES"],
-                        nm_nulos_brancos=0,
-                        nm_abstencoes=0
-                    )
-                db.session.add(data)
-                db.session.commit()
-                print(f"Município {municipio['NM_UE']} importado com sucesso.")
-            except IntegrityError:
-                db.session.rollback()
-                print(f"Município {municipio['NM_UE']} já existe no banco de dados.")
-    
-    @app.cli.command()
-    def simulacao():
-        municipios = Municipio.query.all()
-        for municipio in municipios:
-            
-            # Simular abstencoes
-            random_abstencao = random.uniform(0.004, 0.010)
-            nm_abstencoes = municipio.nm_eleitores * random_abstencao
-            municipio.nm_abstencoes = int(nm_abstencoes)
-            
-            # Simular nulos e brancos
-            random_nulos = random.uniform(0.001, 0.006)
-            nm_brancos_nulos = (municipio.nm_eleitores - nm_abstencoes) * random_nulos
-            municipio.nm_brancos_nulos = int(nm_brancos_nulos)
-
-            print(municipio.nm_ue)
-            print(f"Total de Eleitores: {municipio.nm_eleitores}")
-            print(f"Votos Brancos e Nulos: {int(nm_brancos_nulos)}")
-            print(f"Votos Abstenções: {int(nm_abstencoes)}")
-
-            # Generate n-1 random break points based on the number of electors minus abstentions
-            break_points = sorted(random.sample(range(1, int(municipio.nm_eleitores) - int(nm_abstencoes)), len(municipio.candidatos) - 1))
-
-            # Add 0 and the remaining electors after abstentions as boundaries
-            break_points = [0] + break_points + [municipio.nm_eleitores - nm_abstencoes]
-
-            # Calculate the votes for each candidate by taking the difference between consecutive break points
-            votes = [break_points[i + 1] - break_points[i] for i in range(len(municipio.candidatos))]
-
-            total_votos_validos = 0
-            for index, candidato in enumerate(municipio.candidatos):
-                total_votos_validos += int(votes[index])
-                candidato.nr_votos = int(votes[index])
-                print(candidato.nm_urna_candidato, int(votes[index]))
-
-            print(f'Total Votos Válidos: {total_votos_validos}')
-            print(f"Simulação para {municipio.nm_ue} realizada com sucesso.")
-            
-            municipio.status_apuracao = True
-            db.session.commit()
-            
-    @app.cli.command()
     def update_municipios():
-        
         municipios = [
-            {'nm_ue': 'Rio Branco', 'sg_uf': 'AC'},
-            {'nm_ue': 'Maceió', 'sg_uf': 'AL'},
-            {'nm_ue': 'Manaus', 'sg_uf': 'AM'},
-            {'nm_ue': 'Macapá', 'sg_uf': 'AP'},
-            {'nm_ue': 'Salvador', 'sg_uf': 'BA'},
-            {'nm_ue': 'Feira de Santana', 'sg_uf': 'BA'},
-            {'nm_ue': 'Vitória da Conquista', 'sg_uf': 'BA'},
-            {'nm_ue': 'Camaçari', 'sg_uf': 'BA'},
-            {'nm_ue': 'Fortaleza', 'sg_uf': 'CE'},
-            {'nm_ue': 'Caucaia', 'sg_uf': 'CE'},
-            {'nm_ue': 'Serra', 'sg_uf': 'ES'},
-            {'nm_ue': 'Vila Velha', 'sg_uf': 'ES'},
-            {'nm_ue': 'Cariacica', 'sg_uf': 'ES'},
-            {'nm_ue': 'Vitória', 'sg_uf': 'ES'},
-            {'nm_ue': 'Goiânia', 'sg_uf': 'GO'},
-            {'nm_ue': 'Aparecida de Goiânia', 'sg_uf': 'GO'},
-            {'nm_ue': 'Anápolis', 'sg_uf': 'GO'},
-            {'nm_ue': 'São Luís', 'sg_uf': 'MA'},
-            {'nm_ue': 'Imperatriz', 'sg_uf': 'MA'},
-            {'nm_ue': 'Belo Horizonte', 'sg_uf': 'MG'},
-            {'nm_ue': 'Uberlândia', 'sg_uf': 'MG'},
-            {'nm_ue': 'Contagem', 'sg_uf': 'MG'},
-            {'nm_ue': 'Juiz de Fora', 'sg_uf': 'MG'},
-            {'nm_ue': 'Betim', 'sg_uf': 'MG'},
-            {'nm_ue': 'Montes Claros', 'sg_uf': 'MG'},
-            {'nm_ue': 'Uberaba', 'sg_uf': 'MG'},
-            {'nm_ue': 'Ribeirão das Neves', 'sg_uf': 'MG'},
-            {'nm_ue': 'Campo Grande', 'sg_uf': 'MS'},
-            {'nm_ue': 'Cuiabá', 'sg_uf': 'MT'},
-            {'nm_ue': 'Belém', 'sg_uf': 'PA'},
-            {'nm_ue': 'Ananindeua', 'sg_uf': 'PA'},
-            {'nm_ue': 'Santarém', 'sg_uf': 'PA'},
-            {'nm_ue': 'João Pessoa', 'sg_uf': 'PB'},
-            {'nm_ue': 'Campina Grande', 'sg_uf': 'PB'},
-            {'nm_ue': 'Recife', 'sg_uf': 'PE'},
-            {'nm_ue': 'Jaboatão dos Guararapes', 'sg_uf': 'PE'},
-            {'nm_ue': 'Olinda', 'sg_uf': 'PE'},
-            {'nm_ue': 'Caruaru', 'sg_uf': 'PE'},
-            {'nm_ue': 'Petrolina', 'sg_uf': 'PE'},
-            {'nm_ue': 'Paulista', 'sg_uf': 'PE'},
-            {'nm_ue': 'Teresina', 'sg_uf': 'PI'},
-            {'nm_ue': 'Curitiba', 'sg_uf': 'PR'},
-            {'nm_ue': 'Londrina', 'sg_uf': 'PR'},
-            {'nm_ue': 'Maringá', 'sg_uf': 'PR'},
-            {'nm_ue': 'Ponta Grossa', 'sg_uf': 'PR'},
-            {'nm_ue': 'Cascavel', 'sg_uf': 'PR'},
-            {'nm_ue': 'São José dos Pinhais', 'sg_uf': 'PR'},
-            {'nm_ue': 'Foz do Iguaçu', 'sg_uf': 'PR'},
-            {'nm_ue': 'Rio de Janeiro', 'sg_uf': 'RJ'},
-            {'nm_ue': 'Duque de Caxias', 'sg_uf': 'RJ'},
-            {'nm_ue': 'São Gonçalo', 'sg_uf': 'RJ'},
-            {'nm_ue': 'Nova Iguaçu', 'sg_uf': 'RJ'},
-            {'nm_ue': 'Niterói', 'sg_uf': 'RJ'},
-            {'nm_ue': 'São João de Meriti', 'sg_uf': 'RJ'},
-            {'nm_ue': 'Campos dos Goytacazes', 'sg_uf': 'RJ'},
-            {'nm_ue': 'Belford Roxo', 'sg_uf': 'RJ'},
-            {'nm_ue': 'Petrópolis', 'sg_uf': 'RJ'},
-            {'nm_ue': 'Volta Redonda', 'sg_uf': 'RJ'},
-            {'nm_ue': 'Magé', 'sg_uf': 'RJ'},
-            {'nm_ue': 'Natal', 'sg_uf': 'RN'},
-            {'nm_ue': 'Porto Velho', 'sg_uf': 'RO'},
-            {'nm_ue': 'Boa Vista', 'sg_uf': 'RR'},
-            {'nm_ue': 'Porto Alegre', 'sg_uf': 'RS'},
-            {'nm_ue': 'Caxias do Sul', 'sg_uf': 'RS'},
-            {'nm_ue': 'Canoas', 'sg_uf': 'RS'},
-            {'nm_ue': 'Pelotas', 'sg_uf': 'RS'},
-            {'nm_ue': 'Santa Maria', 'sg_uf': 'RS'},
-            {'nm_ue': 'Joinville', 'sg_uf': 'SC'},
-            {'nm_ue': 'Florianópolis', 'sg_uf': 'SC'},
-            {'nm_ue': 'Blumenau', 'sg_uf': 'SC'},
-            {'nm_ue': 'Aracaju', 'sg_uf': 'SE'},
-            {'nm_ue': 'Barueri', 'sg_uf': 'SP'},
-            {'nm_ue': 'Bauru', 'sg_uf': 'SP'},
-            {'nm_ue': 'Campinas', 'sg_uf': 'SP'},
-            {'nm_ue': 'Carapicuíba', 'sg_uf': 'SP'},
-            {'nm_ue': 'Diadema', 'sg_uf': 'SP'},
-            {'nm_ue': 'Embu das Artes', 'sg_uf': 'SP'},
-            {'nm_ue': 'Franca', 'sg_uf': 'SP'},
-            {'nm_ue': 'Guarujá', 'sg_uf': 'SP'},
-            {'nm_ue': 'Guarulhos', 'sg_uf': 'SP'},
-            {'nm_ue': 'Itaquaquecetuba', 'sg_uf': 'SP'},
-            {'nm_ue': 'Jundiaí', 'sg_uf': 'SP'},
-            {'nm_ue': 'Limeira', 'sg_uf': 'SP'},
-            {'nm_ue': 'Mauá', 'sg_uf': 'SP'},
-            {'nm_ue': 'Mogi das Cruzes', 'sg_uf': 'SP'},
-            {'nm_ue': 'Osasco', 'sg_uf': 'SP'},
-            {'nm_ue': 'Piracicaba', 'sg_uf': 'SP'},
-            {'nm_ue': 'Praia Grande', 'sg_uf': 'SP'},
-            {'nm_ue': 'Ribeirão Preto', 'sg_uf': 'SP'},
-            {'nm_ue': 'Santo André', 'sg_uf': 'SP'},
-            {'nm_ue': 'Santos', 'sg_uf': 'SP'},
-            {'nm_ue': 'São Bernardo do Campo', 'sg_uf': 'SP'},
-            {'nm_ue': 'São José do Rio Preto', 'sg_uf': 'SP'},
-            {'nm_ue': 'São José dos Campos', 'sg_uf': 'SP'},
-            {'nm_ue': 'São Paulo', 'sg_uf': 'SP'},
-            {'nm_ue': 'São Vicente', 'sg_uf': 'SP'},
-            {'nm_ue': 'Sorocaba', 'sg_uf': 'SP'},
-            {'nm_ue': 'Sumaré', 'sg_uf': 'SP'},
-            {'nm_ue': 'Suzano', 'sg_uf': 'SP'},
-            {'nm_ue': 'Taboão da Serra', 'sg_uf': 'SP'},
-            {'nm_ue': 'Taubaté', 'sg_uf': 'SP'},
-            {'nm_ue': 'Palmas', 'sg_uf': 'TO'}
+            {'nome': 'Rio Branco', 'uf': 'AC'},
+            {'nome': 'Maceió', 'uf': 'AL'},
+            {'nome': 'Manaus', 'uf': 'AM'},
+            {'nome': 'Macapá', 'uf': 'AP'},
+            {'nome': 'Salvador', 'uf': 'BA'},
+            {'nome': 'Feira de Santana', 'uf': 'BA'},
+            {'nome': 'Vitória da Conquista', 'uf': 'BA'},
+            {'nome': 'Camaçari', 'uf': 'BA'},
+            {'nome': 'Fortaleza', 'uf': 'CE'},
+            {'nome': 'Caucaia', 'uf': 'CE'},
+            {'nome': 'Serra', 'uf': 'ES'},
+            {'nome': 'Vila Velha', 'uf': 'ES'},
+            {'nome': 'Cariacica', 'uf': 'ES'},
+            {'nome': 'Vitória', 'uf': 'ES'},
+            {'nome': 'Goiânia', 'uf': 'GO'},
+            {'nome': 'Aparecida de Goiânia', 'uf': 'GO'},
+            {'nome': 'Anápolis', 'uf': 'GO'},
+            {'nome': 'São Luís', 'uf': 'MA'},
+            {'nome': 'Imperatriz', 'uf': 'MA'},
+            {'nome': 'Belo Horizonte', 'uf': 'MG'},
+            {'nome': 'Uberlândia', 'uf': 'MG'},
+            {'nome': 'Contagem', 'uf': 'MG'},
+            {'nome': 'Juiz de Fora', 'uf': 'MG'},
+            {'nome': 'Betim', 'uf': 'MG'},
+            {'nome': 'Montes Claros', 'uf': 'MG'},
+            {'nome': 'Uberaba', 'uf': 'MG'},
+            {'nome': 'Ribeirão das Neves', 'uf': 'MG'},
+            {'nome': 'Campo Grande', 'uf': 'MS'},
+            {'nome': 'Cuiabá', 'uf': 'MT'},
+            {'nome': 'Belém', 'uf': 'PA'},
+            {'nome': 'Ananindeua', 'uf': 'PA'},
+            {'nome': 'Santarém', 'uf': 'PA'},
+            {'nome': 'João Pessoa', 'uf': 'PB'},
+            {'nome': 'Campina Grande', 'uf': 'PB'},
+            {'nome': 'Recife', 'uf': 'PE'},
+            {'nome': 'Jaboatão dos Guararapes', 'uf': 'PE'},
+            {'nome': 'Olinda', 'uf': 'PE'},
+            {'nome': 'Caruaru', 'uf': 'PE'},
+            {'nome': 'Petrolina', 'uf': 'PE'},
+            {'nome': 'Paulista', 'uf': 'PE'},
+            {'nome': 'Teresina', 'uf': 'PI'},
+            {'nome': 'Curitiba', 'uf': 'PR'},
+            {'nome': 'Londrina', 'uf': 'PR'},
+            {'nome': 'Maringá', 'uf': 'PR'},
+            {'nome': 'Ponta Grossa', 'uf': 'PR'},
+            {'nome': 'Cascavel', 'uf': 'PR'},
+            {'nome': 'São José dos Pinhais', 'uf': 'PR'},
+            {'nome': 'Foz do Iguaçu', 'uf': 'PR'},
+            {'nome': 'Rio de Janeiro', 'uf': 'RJ'},
+            {'nome': 'Duque de Caxias', 'uf': 'RJ'},
+            {'nome': 'São Gonçalo', 'uf': 'RJ'},
+            {'nome': 'Nova Iguaçu', 'uf': 'RJ'},
+            {'nome': 'Niterói', 'uf': 'RJ'},
+            {'nome': 'São João de Meriti', 'uf': 'RJ'},
+            {'nome': 'Campos dos Goytacazes', 'uf': 'RJ'},
+            {'nome': 'Belford Roxo', 'uf': 'RJ'},
+            {'nome': 'Petrópolis', 'uf': 'RJ'},
+            {'nome': 'Volta Redonda', 'uf': 'RJ'},
+            {'nome': 'Magé', 'uf': 'RJ'},
+            {'nome': 'Natal', 'uf': 'RN'},
+            {'nome': 'Porto Velho', 'uf': 'RO'},
+            {'nome': 'Boa Vista', 'uf': 'RR'},
+            {'nome': 'Porto Alegre', 'uf': 'RS'},
+            {'nome': 'Caxias do Sul', 'uf': 'RS'},
+            {'nome': 'Canoas', 'uf': 'RS'},
+            {'nome': 'Pelotas', 'uf': 'RS'},
+            {'nome': 'Santa Maria', 'uf': 'RS'},
+            {'nome': 'Joinville', 'uf': 'SC'},
+            {'nome': 'Florianópolis', 'uf': 'SC'},
+            {'nome': 'Blumenau', 'uf': 'SC'},
+            {'nome': 'Aracaju', 'uf': 'SE'},
+            {'nome': 'Barueri', 'uf': 'SP'},
+            {'nome': 'Bauru', 'uf': 'SP'},
+            {'nome': 'Campinas', 'uf': 'SP'},
+            {'nome': 'Carapicuíba', 'uf': 'SP'},
+            {'nome': 'Diadema', 'uf': 'SP'},
+            {'nome': 'Embu das Artes', 'uf': 'SP'},
+            {'nome': 'Franca', 'uf': 'SP'},
+            {'nome': 'Guarujá', 'uf': 'SP'},
+            {'nome': 'Guarulhos', 'uf': 'SP'},
+            {'nome': 'Itaquaquecetuba', 'uf': 'SP'},
+            {'nome': 'Jundiaí', 'uf': 'SP'},
+            {'nome': 'Limeira', 'uf': 'SP'},
+            {'nome': 'Mauá', 'uf': 'SP'},
+            {'nome': 'Mogi das Cruzes', 'uf': 'SP'},
+            {'nome': 'Osasco', 'uf': 'SP'},
+            {'nome': 'Piracicaba', 'uf': 'SP'},
+            {'nome': 'Praia Grande', 'uf': 'SP'},
+            {'nome': 'Ribeirão Preto', 'uf': 'SP'},
+            {'nome': 'Santo André', 'uf': 'SP'},
+            {'nome': 'Santos', 'uf': 'SP'},
+            {'nome': 'São Bernardo do Campo', 'uf': 'SP'},
+            {'nome': 'São José do Rio Preto', 'uf': 'SP'},
+            {'nome': 'São José dos Campos', 'uf': 'SP'},
+            {'nome': 'São Paulo', 'uf': 'SP'},
+            {'nome': 'São Vicente', 'uf': 'SP'},
+            {'nome': 'Sorocaba', 'uf': 'SP'},
+            {'nome': 'Sumaré', 'uf': 'SP'},
+            {'nome': 'Suzano', 'uf': 'SP'},
+            {'nome': 'Taboão da Serra', 'uf': 'SP'},
+            {'nome': 'Taubaté', 'uf': 'SP'},
+            {'nome': 'Palmas', 'uf': 'TO'}
         ]
-
-        
+        url = "https://p1-cloud.trrsf.com/api/eleicoes2024-api/resultados"
         for municipio in municipios:
-            check = Municipio.query.filter_by(nm_ue=municipio['nm_ue'].upper()).one_or_none()
-            if check is None:
-                check = Municipio(
-                    sg_uf=municipio['sg_uf'].upper(),
-                    nm_ue=municipio['nm_ue'].upper(),
-                    nm_eleitores=0,
-                    nm_nulos_brancos=0,
-                    nm_abstencoes=0
-                )
-                db.session.add(check)
+            normalize = unidecode.unidecode(municipio['nome'])
+            municipio['nome_normalizado'] = normalize.upper()
+            
+            
+            # Request API 
+            params = {
+                "municipio": municipio['nome_normalizado']
+            }
+            response = requests.get(url, params=params)
+            
+            if response.status_code == 200:
+                data = response.json()['0']
+                result = Municipio.query.filter_by(codigo_municipio=data['codigo_municipio']).first()   
+                if result is None:
+                    new_municipio = Municipio(
+                        codigo_municipio=data['codigo_municipio'],
+                        nome=data['nome'], 
+                        nome_normalizado=data['nome_normalizado'],
+                        UF=data['UF'],
+                        dt=datetime.strptime(data['dt'], '%d/%m/%Y').date(),
+                        ht=data['ht'],
+                        matematicamente_definido=data['matematicamente_definido'],
+                        totalizacao_final=data['totalizacao_final'],
+                        total_votos=data['total_votos'],
+                        votos_validos=data['votos_validos'],
+                        percentual_votos_validos=data['percentual_votos_validos'],
+                        percentual_secoes_totalizadas=data['percentual_secoes_totalizadas'],
+                        votos_branco=data['votos_branco'],
+                        percentual_votos_branco=data['percentual_votos_branco'],
+                        votos_nulo=data['votos_nulo'],
+                        percentual_votos_nulo=data['percentual_votos_nulo'],
+                        abstencao=data['abstencao'],
+                        percentual_abstencao=data['percentual_abstencao'],
+                    )        
+                    db.session.add(new_municipio)
+                    for candidato_data in data['candidatos']:
+                        candidato = Candidato(
+                            nro=candidato_data['nro'],
+                            seq=candidato_data['seq'],
+                            sqcand=candidato_data['sqcand'],
+                            situacao=candidato_data.get('situacao', ''),  # Optional field, default to empty string if missing
+                            destinacao_voto=candidato_data['destinacao_voto'],
+                            nome_urna=candidato_data['nome_urna'],
+                            nome=candidato_data['nome'],
+                            foto=candidato_data['foto'],
+                            partido=candidato_data['partido'],
+                            votos_apurados=candidato_data['votos_apurados'],
+                            percentual_votos_apurados=candidato_data['percentual_votos_apurados'],
+                            codigo_municipio=new_municipio.codigo_municipio  # Foreign key relationship
+                        )
+                        # Add each Candidato to the session
+                        db.session.add(candidato)
+                else:
+                    result.nome = data['nome']
+                    result.nome_normalizado = data['nome_normalizado']
+                    result.UF = data['UF']
+                    result.dt = datetime.strptime(data['dt'], '%d/%m/%Y').date()
+                    result.ht = data['ht']
+                    result.matematicamente_definido = data['matematicamente_definido']
+                    result.totalizacao_final = data['totalizacao_final']
+                    result.total_votos = data['total_votos']
+                    result.votos_validos = data['votos_validos']
+                    result.percentual_votos_validos = data['percentual_votos_validos']
+                    result.percentual_secoes_totalizadas = data['percentual_secoes_totalizadas']
+                    result.votos_branco = data['votos_branco']
+                    result.percentual_votos_branco = data['percentual_votos_branco']
+                    result.votos_nulo = data['votos_nulo']
+                    result.percentual_votos_nulo = data['percentual_votos_nulo']
+                    result.abstencao = data['abstencao']
+                    result.percentual_abstencao = data['percentual_abstencao']  
                 db.session.commit()
-                print(f"Município {municipio.nm_ue} adicionado com sucesso.")
+            else:
+                print(f"Error: {response.status_code} - {response.text}")

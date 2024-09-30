@@ -14,56 +14,34 @@
         </div> 
     </div>
     <div class="row">
-        <div class="row align-items-center py-1">
-            <div class="col-sm-6">
-                <a href="{{ url_for('webui.export_to_csv')}}" class="btn btn-primary"><i class="bi bi-box-arrow-down"></i> Exportar CSV</a>
-                <a href="{{ url_for('webui.videos')}}" class="btn btn-dark"><i class="bi bi-film"></i> Vídeos</a>
-            </div>
-        </div>
-    </div>
-    <div class="row">
         <div class="col-sm-12">
             <table class="table">
                 <thead>
                     <th>#</th>
                     <th>Estado</th>
                     <th>Município</th>
-                    <th>Candidatos</th>
-                    <th>Eleitores</th>
+                    <th>Matemáticamente Definido</th>
                     <th>Apuração</th>
-                    <th>2º Turno</th>
                     <th></th>
                 </thead>
                 <tbody>
                     {% for municipio in municipios %}
                     <tr>
                         <td>{{ loop.index }}</td>
-                        <td>{{ municipio.sg_uf }}</td>
-                        <td>{{ municipio.nm_ue.title() }}</td>
-                        <td>{{ municipio.nm_candidatos }}</td>
-                        <td>{{ municipio.nm_eleitores }}</td>
+                        <td>{{ municipio.UF }}</td>
+                        <td>{{ municipio.nome }}</td>
                         <td>
-                            {% if municipio.status_apuracao == True %}
-                            <span class="badge text-bg-success">Matemáticamente Definida</span>
+                            {% if municipio.matematicamente_definido == "s" %}
+                            <span class="badge text-bg-success">Sim</span>
+                            {% elif municipio.matematicamente_definido == "n" %}
+                            <span class="badge text-bg-warning">Não</span>
                             {% else %}
-                            <span class="badge text-bg-danger">Em Andamento</span>
+                            <span class="badge text-bg-danger">N/A</span>
                             {% endif %}
-                        
-                        </td>
-                        <td class="text-center">
-                            {% if municipio.status_apuracao == True %}
-                                {% if municipio.segundo_turno == True %}
-                                Sim
-                                {% else %}
-                                Não
-                                {% endif %}
-                            {% else %}
-                            <span> - </span>
-                            {% endif %}
-                        </td>
+                        <td>{{ municipio.totalizacao_final}} </td>
                         <td>
-                            <a href="{{ url_for('webui.candidatos', municipio_id = municipio.id)}}" class="btn btn-primary">Candidatos</a>
-                            <a href="{{ url_for('webui.criar_artigo', municipio_id = municipio.id)}}" class="btn btn-primary"><i class="bi bi-card-text"></i> Artigo</a>
+                            <a href="{{ url_for('webui.terra_json', nome_normalizado=municipio.nome_normalizado)}}" class="btn btn-dark" target="_blank"><i class="bi bi-braces" aria-label="JSON"></i></a>
+                            <a href="{{ url_for('webui.candidatos', codigo_municipio = municipio.codigo_municipio)}}" class="btn btn-primary">Candidatos</a>
                             <a href="{{ url_for('webui.criar_video', municipio_id = municipio.id)}}" class="btn btn-dark"><i class="bi bi-film"></i> Gerar Vídeo</a>
                         </td>
                     </tr>
