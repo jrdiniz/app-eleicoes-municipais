@@ -25,9 +25,9 @@ bp.add_url_rule("/", view_func=index)
 candidatos.methods = ["GET"]
 bp.add_url_rule("/candidatos/<codigo_municipio>", view_func=candidatos)
 
-# Cirar Video
+# Criar Video
 criar_video.methods = ["GET"]
-bp.add_url_rule("/video/criar/<municipio_id>", view_func=criar_video)
+bp.add_url_rule("/video/criar/<codigo_municipio>", view_func=criar_video)
 
 # Lista de Vídeos Criados
 videos.methods = ["GET"]

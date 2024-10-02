@@ -20,6 +20,7 @@
                     <th>#</th>
                     <th>Estado</th>
                     <th>Município</th>
+                    <th>Candidatos</th>
                     <th>Matemáticamente Definido</th>
                     <th>Apuração</th>
                     <th></th>
@@ -30,6 +31,7 @@
                         <td>{{ loop.index }}</td>
                         <td>{{ municipio.UF }}</td>
                         <td>{{ municipio.nome }}</td>
+                        <td>{{ municipio.candidatos|count }}</td>
                         <td>
                             {% if municipio.matematicamente_definido == "s" %}
                             <span class="badge text-bg-success">Sim</span>
@@ -42,7 +44,7 @@
                         <td>
                             <a href="{{ url_for('webui.terra_json', nome_normalizado=municipio.nome_normalizado)}}" class="btn btn-dark" target="_blank"><i class="bi bi-braces" aria-label="JSON"></i></a>
                             <a href="{{ url_for('webui.candidatos', codigo_municipio = municipio.codigo_municipio)}}" class="btn btn-primary">Candidatos</a>
-                            <a href="{{ url_for('webui.criar_video', municipio_id = municipio.id)}}" class="btn btn-dark"><i class="bi bi-film"></i> Gerar Vídeo</a>
+                            <a href="{{ url_for('webui.criar_video', codigo_municipio = municipio.codigo_municipio)}}" class="btn btn-dark"><i class="bi bi-film"></i> Gerar Vídeo</a>
                         </td>
                     </tr>
                     {% endfor %}

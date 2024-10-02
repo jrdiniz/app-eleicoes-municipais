@@ -16,7 +16,7 @@ class ProductionConfig(Config):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {'pool_size': 20,'max_overflow':0, 'pool_recycle': 200, 'pool_pre_ping': True}
 
-    PLAINLY_API_KEY = 'vpzHa0O8y7tEl9dXpaA3ciji0teiZkdq'
+    PLAINLY_API_KEY = 'k7HWJiSXcsdrKTrvJKGtXhNATXrMMy3J'
 
 class DevelopmentConfig(Config):
     # Debug
@@ -28,4 +28,4 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     SQLALCHEMY_ENGINE_OPTIONS = {'pool_size': 20,'max_overflow':0, 'pool_recycle': 200, 'pool_pre_ping': True}
     
-    PLAINLY_API_KEY = 'vpzHa0O8y7tEl9dXpaA3ciji0teiZkdq'
+    PLAINLY_API_KEY = 'k7HWJiSXcsdrKTrvJKGtXhNATXrMMy3J'

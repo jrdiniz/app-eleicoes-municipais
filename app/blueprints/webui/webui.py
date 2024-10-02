@@ -3,6 +3,7 @@ import time
 import requests
 import datetime
 import pytz
+from decimal import Decimal
 from requests.auth import HTTPBasicAuth
 
 from flask import Flask
@@ -44,19 +45,7 @@ def criar_video(codigo_municipio):
     template = pegar_template(len(candidatos))
         
     parameters = {}
-    parameters[f"cidade"] = municipio.nome
-    
-    # Determina se haverá segundo turno
-    if municipio.segundo_turno:
-        parameters[f"turnoResultado"] = "Haverá segundo turno"
-        parameters[f"disputa2TurnoC1"] = str(100)
-        parameters[f"disputa2TurnoC2"] = str(100)
-    else:
-        parameters[f"turnoResultado"] = "Não haverá segundo turno"
-        parameters[f"semSegundoTurno"] = str(100)
-        
-    # Status da Apuração
-    parameters[f"urnasApuradas"] = "Eleição matematicamente definida"
+    parameters[f"cidade"] = f"{municipio.nome} ({municipio.UF})"        
     
     parameters[f"cidade2"] = f"{municipio.nome} - {municipio.UF}"
     
@@ -68,7 +57,7 @@ def criar_video(codigo_municipio):
         parameters[f"candidato{i}Foto"] = f"{candidato.foto}"
     
     for i, candidato in enumerate(candidatos, start=1):
-        if (candidato.nr_votos / municipio.nm_eleitores * 100) >= 50.01:
+        if Decimal(candidato.votos_apurados) >= ((Decimal(municipio.votos_validos) / 2) + 1):
             parameters[f"turnoResultado"] = "Não haverá segundo turno"
             parameters[f"indicadorEleito"] = "100"
             break
@@ -79,18 +68,16 @@ def criar_video(codigo_municipio):
     # Abstenções
     parameters[f"abstencaoPercentual"] = f"{municipio.percentual_abstencao} %"
     
-    # Nulos
-    parameters[f"nulosPercentual"] = f"{municipio.percentual_votos_nulo} %"
-    parameters[f"nulosTotal"] = f"{municipio.votos_nulo} votos"
+    # Brancos e Nulos Percentual
+    percentual_votos_nulos_brancos = municipio.percentual_votos_branco + municipio.percentual_votos_nulo
+    parameters[f"brancosNulosPercentual"] = f"{percentual_votos_nulos_brancos} %"
     
-    # Brancos
-    parameters[f"brancosPercentual"] = f"{municipio.percentual_votos_branco} %"
-    parameters[f"brancosTotal"] = f"{municipio.votos_branco} votos"
+    # Brancos e Nulos Total
+    votos_nulos_brancos = municipio.votos_branco + municipio.votos_nulo
+    parameters[f"brancosNulosTotal"] = f"{votos_nulos_brancos}"
     
-    # Válidos
-    parameters[f"validosPercentual"] = f"{municipio.percentual_votos_validos} %"
-    parameters[f"validosTotal"] = f"{municipio.votos_validos} votos"
-
+    # Votos Válidos
+    parameters[f"votosValidos"] = f"Voto válidos {municipio.votos_validos} ({municipio.percentual_votos_validos}%), fonte TSE votos"
     
     endpoint = "https://api.plainlyvideos.com/api/v2/renders"
     headers = {
@@ -99,12 +86,7 @@ def criar_video(codigo_municipio):
     data = {
         "projectId": f"{template['projectId']}",
         "templateId":  f"{template['templateId']}",
-        "parameters": parameters,
-        "options": {
-            "integrations": {
-                "passthrough": f"Resultado Eleições Municípais em {municipio.nm_ue.title()} - {municipio.sg_uf.upper()}",
-            }
-        }
+        "parameters": parameters
     }
     auth = HTTPBasicAuth(current_app.config["PLAINLY_API_KEY"], '')
     
@@ -116,7 +98,7 @@ def criar_video(codigo_municipio):
         auth=auth
     )
     
-    video = Video(
+    """video = Video(
         municipio_id=municipio.id,
         data_criacao=datetime.datetime.now(),
         titulo=f"Eleições Municípais: {municipio.nome} - {municipio.UF}",
@@ -129,53 +111,53 @@ def criar_video(codigo_municipio):
         plainly_thumbnail_uri=""
     )
     db.session.add(video)
-    db.session.commit()
+    db.session.commit() """
     
     
     #return jsonify(data)
-    return redirect(url_for('webui.videos'))    
+    return redirect(url_for('webui.index'))    
 
 
 def pegar_template(nm_candidatos):
     templates = [
         {
-            'projectId': '',
-            'templateId': "1b65627d-c5f8-46b6-8912-272f8bbccacc",
+            'projectId': 'bd7ffc02-8f57-4795-be33-ec64b6b2ef09',
+            'templateId': 'c0250f96-42e4-4c09-80ab-ce32e75254d9',
             'nm_candidados': 3
         },
         {
-            'projectId': 'd889a065-eba5-4bb9-901e-d0e31727284a',
-            'templateId': "e0091f83-ef0e-40a5-a8a2-2af459c74e47",
+            'projectId': 'a66e8c0c-89c8-4440-8c24-cdf60d10f5bc',
+            'templateId': '30e42b94-70ee-4e89-be42-5e52289a7103',
             'nm_candidados': 4
         },
         {
-            'projectId': '',
-            'templateId': "1b65627d-c5f8-46b6-8912-272f8bbccacc",
+            'projectId': 'edf83540-bb85-4b59-8b87-de84dd166275',
+            'templateId': '175d6370-8bb6-402d-bb30-b1596cf289a7',
             'nm_candidados': 5
         },
         {
-            'projectId': '',
-            'templateId': "1b65627d-c5f8-46b6-8912-272f8bbccacc",
+            'projectId': '02fed3ad-64dd-40e1-8e8e-9c95dd82a162',
+            'templateId': '03356aa3-4311-4add-a61a-481ac988a3cf',
             'nm_candidados': 6
         },
         {
-            'projectId': '',
-            'templateId': "1b65627d-c5f8-46b6-8912-272f8bbccacc",
+            'projectId': '3bcdfcf5-d1c4-4a57-bf14-28b87570e2a8',
+            'templateId': '0cb1f2ec-bc6f-49a4-adb7-d6454f7ca9ac',
             'nm_candidados': 7
         },
         {
-            'projectId': '',
-            'templateId': "1b65627d-c5f8-46b6-8912-272f8bbccacc",
+            'projectId': '0009aa7c-d31f-4b07-aaf7-1a3a82372c91',
+            'templateId': '352f14a6-6aef-4cbe-aa5d-e57564aa73ea',
             'nm_candidados': 8
         },
         {
-            'projectId': '',
-            'templateId': "1b65627d-c5f8-46b6-8912-272f8bbccacc",
+            'projectId': 'ddd74c5a-7f96-47e8-a12f-b79f3871f1ec',
+            'templateId': 'b397a545-0fe9-4b15-b37a-18df2c538b83',
             'nm_candidados': 9
         },
         {
-            'projectId': '90e73e3d-2c18-47d2-a49d-bf9cb6513518',
-            'templateId': "7df8aa80-0831-4633-8a08-ed0e5c89b8dc",
+            'projectId': '79efcf99-b957-4acd-8625-4ec29137bc75',
+            'templateId': 'f89e0126-fbda-477e-bbf3-2557cc2c8cea',
             'nm_candidados': 10
         }
     ]
