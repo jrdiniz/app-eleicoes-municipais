@@ -54,7 +54,7 @@ def criar_video(codigo_municipio):
         parameters[f"candidato{i}Partido"] = candidato.partido
         parameters[f"candidato{i}Percentual"] = f"{candidato.percentual_votos_apurados} %"
         parameters[f"candidato{i}Votos"] = f"{candidato.votos_apurados} votos"
-        parameters[f"candidato{i}Foto"] = f"{candidato.foto}"
+        parameters[f"candidato{i}Foto"] = f"https://eleicoes.gorobei.net/static/fotos/FSP250001926547_div.jpg"
     
     for i, candidato in enumerate(candidatos, start=1):
         if Decimal(candidato.votos_apurados) >= ((Decimal(municipio.votos_validos) / 2) + 1):
@@ -83,14 +83,15 @@ def criar_video(codigo_municipio):
     headers = {
         "Content-Type": "application/json"
     }
+ 
     data = {
         "projectId": f"{template['projectId']}",
         "templateId":  f"{template['templateId']}",
-        "parameters": parameters
+        "parameters": parameters,
     }
     auth = HTTPBasicAuth(current_app.config["PLAINLY_API_KEY"], '')
     
-    
+    print("aqui")
     response = requests.post(
         endpoint, 
         headers=headers, 
