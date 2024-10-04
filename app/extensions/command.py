@@ -4,6 +4,10 @@ import re
 import unidecode
 import requests
 import json
+import csv
+from datetime import datetime
+
+import pandas as pd
 
 from app.extensions.database import db
 from app.blueprints.models import Candidato
@@ -196,3 +200,77 @@ def init_app(app):
                 db.session.commit()
             else:
                 print(f"Error: {response.status_code} - {response.text}")
+                
+                
+    @app.cli.command()
+    def import_candidatos():
+        municipios = db.session.query(Municipio).all()
+
+        csv_file_path = "/home/juliano/apps/app-eleicoes-municipais/csv/consulta_cand_2024/consulta_cand_2024_BRASIL.csv"
+        df = pd.read_csv(csv_file_path, sep=";", encoding="ISO-8859-1")
+
+        # Filtrar apenas candidatos a prefeito
+        df_prefeitos = df[df["DS_CARGO"] == "PREFEITO"]
+
+        # Filtrar apenas as colunas que serão importadas para tables candidatos
+        df_prefeitos = df_prefeitos[["SQ_CANDIDATO", "NR_CANDIDATO", "NM_CANDIDATO", "NM_URNA_CANDIDATO", "SG_UF", "NM_UE", "NR_PARTIDO", "SG_PARTIDO", "NM_PARTIDO", "DS_CARGO"]]
+
+        # Converter df_prefeitos para uma lista de dicionários
+        prefeitos = df_prefeitos.to_dict("records")
+
+        # Fotos
+        fotos_file_path = "/home/juliano/apps/app-eleicoes-municipais/app/static/fotos/"
+
+        for municipio in municipios:
+            for prefeito in prefeitos:
+                try:
+                    if municipio.nome.upper() == prefeito["NM_UE"] and municipio.UF == prefeito["SG_UF"]:
+                        candidato = {
+                            "sqcand": prefeito['SQ_CANDIDATO'],
+                            "nro": prefeito['NR_CANDIDATO'],
+                            "nome_urna": prefeito['NM_URNA_CANDIDATO'],
+                            "nome": prefeito['NM_CANDIDATO'],
+                            "partido": f"{prefeito['SG_PARTIDO']}",
+                            "votos_apurados": str(0),
+                            "percentual_votos_apurados": str(0.0),
+                            "seq": str(0)
+                        }
+                        # Get photo from app/static/fotos
+                        ft_candidato = f"F{municipio.UF}{candidato['sqcand']}_div"
+                        if os.path.exists(fotos_file_path + f"{ft_candidato}.jpeg"):
+                            candidato['foto'] = f"{ft_candidato}.jpeg"
+                        elif os.path.exists(fotos_file_path + f"{ft_candidato}.jpg"):
+                            candidato['foto'] = f"{ft_candidato}.jpg"
+                        else:
+                            candidato['foto'] = "none.jpeg"
+                            
+                        data = Candidato(**candidato, codigo_municipio=municipio.codigo_municipio)
+                        db.session.add(data)
+                        db.session.commit()
+                        print(f"Candidato {candidato} importado com sucesso.")
+                except IntegrityError:
+                    db.session.rollback()
+                    print(f"Candidato {prefeito['NM_URNA_CANDIDATO']} já existe no banco de dados.")
+
+
+    @app.cli.command()
+    def clean_municipios_variables():
+        municipios = db.session.query(Municipio).all()
+        for municipio in municipios:
+            municipio.totalizacao_final = 'n'
+            municipio.total_votos = str(0)
+            municipio.votos_validos = str(0)
+            municipio.percentual_votos_validos = str(0)
+            municipio.percentual_secoes_totalizadas = str(0)
+            municipio.votos_branco = str(0)
+            municipio.percentual_votos_branco = str(0)
+            municipio.votos_nulo = str(0)
+            municipio.percentual_votos_nulo = str(0)
+            municipio.abstencao = str(0)
+            municipio.percentual_abstencao = str(0)
+            municipio.matematicamente_definido = 'n'
+            municipio.ht = datetime.now().time()
+            municipio.dt = datetime.now().date()
+            db.session.commit()
+            print(f"Valores variaveis zerados {municipio.nome}")
+        

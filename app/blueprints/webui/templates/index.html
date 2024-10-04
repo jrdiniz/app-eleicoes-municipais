@@ -40,11 +40,21 @@
                             {% else %}
                             <span class="badge text-bg-danger">N/A</span>
                             {% endif %}
-                        <td>{{ municipio.totalizacao_final}} </td>
+                        <td>
+                            {% if municipio.totalizacao_final == "n" %}
+                                <span class="badge text-bg-primary">Em Andamento</span> 
+                            {% elif municipio.totalizacao_final == "s" %}
+                                <span class="badge text-bg-success">Finalizada</span> 
+                            {% else %}
+                                <span class="badge text-bg-error">N/D</span> 
+                            {% endif %}
+                        </td>
                         <td>
                             <a href="{{ url_for('webui.terra_json', nome_normalizado=municipio.nome_normalizado)}}" class="btn btn-dark" target="_blank"><i class="bi bi-braces" aria-label="JSON"></i></a>
-                            <a href="{{ url_for('webui.candidatos', codigo_municipio = municipio.codigo_municipio)}}" class="btn btn-primary">Candidatos</a>
+                            <a href="{{ url_for('webui.candidatos', codigo_municipio = municipio.codigo_municipio)}}" class="btn btn-primary"><i class="bi bi-person-bounding-box"></i></a>
                             <a href="{{ url_for('webui.criar_video', codigo_municipio = municipio.codigo_municipio)}}" class="btn btn-dark"><i class="bi bi-film"></i> Gerar Vídeo</a>
+                            <a href="{{ url_for('webui.yt_copy', codigo_municipio = municipio.codigo_municipio)}}" class="btn btn-info"><i class="bi bi-journal-text"></i></a>
+
                         </td>
                     </tr>
                     {% endfor %}

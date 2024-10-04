@@ -14,55 +14,31 @@
             <h1>Vídeos com os Resultados</h1>
         </div>
     </div>
-    <hr>
     <div class="row">
-        <div class="col-sm-12" hx-get="{{ url_for('webui.video_lista')}}" hx-swap="innerHTML" hx-trigger="every 10s">
+        <div class="col-sm-12">
             <div class="col-sm-12">
                 <table class="table table-hover">
-                    <thead class="table-dark">
-                        <th>Data de Criação</th>
+                    <thead>
+                        <th>Thumbnail</th>
+                        <th>Municipio</th>
                         <th>Título</th>
                         <th>Processamento</th>
                         <th>ID Plainly</th>
                         <th></th>
                     </thead>
                     <tbody class="table-group-divider">
-                        {% for video in videos %}
-                        {% if video.plainly_state == "DONE" %}
-                        <tr class="table-success">
-                        {% elif video.plainly_state == "PENDING" %}
-                        <tr class="table-warning">
-                        {% elif video.plainly_state == "IN_PROGRESS" %}
-                        <tr class="table-primary">
-                        {% elif video.plainly_state == "INVALID" %}
-                        <tr class="table-danger">
-                        {% else %}
-                        <tr>
-                        {% endif %}
-                            <td>{{ video.data_criacao.strftime('%d/%m/%Y %H:%M') }}</td>
-                            <td>{{ video.titulo }}</td>
-                            <td>
-                                {% if video.plainly_state == "DONE" %}
-                                    <span class="fw-bold">Finalizado</span>
-                                {% elif video.plainly_state == "PENDING" %}
-                                    <span class="fw-bold">Pendente</span>
-                                {% elif video.plainly_state == "IN_PROGRESS" %}
-                                    <span class="fw-bold">Processando</span>
-                                {% elif video.plainly_state == "INVALID" %}
-                                    <span class="fw-bold">Erro</span>
-                                {% else %}
-                                    {{ video.plainly_state }}
-                                {% endif %}
-                            </td>
-                            <td>{{ video.plainly_id }}</td>
-                            <td class="col-3">
-                                {% if video.plainly_state == "DONE" %}
-                                    <a class="btn btn-dark btn-sm" href="{{ video.plainly_url }}" target="_blank">Vídeo</a>
-                                    <a class="btn btn-dark btn-sm" href="{{ video.plainly_thumbnail_uri }}" target="_blank">Thumbnail</a>
-                                {% endif %}
-                                <a class="btn btn-danger btn-sm" href="{{ url_for('webui.delete_video', video_id = video.id) }}">Excluir</a>
-                            </td>
-                        </tr>
+                        {% for municipio in municipios %}
+                            {% for video in municipio.videos %}
+                            <tr>
+                                <td class="col-sm-2">
+                                    <img class="img-fluid" src="{{url_for('static', filename='thumbs')}}/{{video.thumbnail_uri}}" alt="" srcset="">
+                                </td>
+                                <td>
+                                    {{ municipio.nome}}
+                                </td>
+                                <td>{{ video.titulo }}</td>
+                            </tr>
+                            {% endfor %}
                         {% endfor %}
                     </tbody>
                 </table>

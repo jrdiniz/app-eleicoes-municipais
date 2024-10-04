@@ -27,9 +27,11 @@ from sqlalchemy import func
 
 # XML
 import xml.etree.ElementTree as ET
+import os
+import os
 
 def index():
-    municipios = db.session.query(Municipio).order_by(Municipio.total_votos.desc()).all()
+    municipios = db.session.query(Municipio).order_by(Municipio.totalizacao_final.desc()).all()
     return render_template("index.html", municipios=municipios)
 
 def candidatos(codigo_municipio):
@@ -39,7 +41,7 @@ def candidatos(codigo_municipio):
 
 def criar_video(codigo_municipio):
     municipio = Municipio.query.filter_by(codigo_municipio=codigo_municipio).first_or_404()
-    candidatos = Candidato.query.filter(Candidato.codigo_municipio == codigo_municipio).all()
+    candidatos = Candidato.query.filter(Candidato.codigo_municipio == codigo_municipio).order_by(Candidato.votos_apurados).all()
 
     # Pega as configurações do template conforme o número de candidatos
     template = pegar_template(len(candidatos))
@@ -54,7 +56,7 @@ def criar_video(codigo_municipio):
         parameters[f"candidato{i}Partido"] = candidato.partido
         parameters[f"candidato{i}Percentual"] = f"{candidato.percentual_votos_apurados} %"
         parameters[f"candidato{i}Votos"] = f"{candidato.votos_apurados} votos"
-        parameters[f"candidato{i}Foto"] = f"https://eleicoes.gorobei.net/static/fotos/FSP250001926547_div.jpg"
+        parameters[f"candidato{i}Foto"] = f"https://eleicoes.gorobei.net/static/fotos/F{municipio.UF}{candidato.sqcand}_div.jpg"
     
     for i, candidato in enumerate(candidatos, start=1):
         if Decimal(candidato.votos_apurados) >= ((Decimal(municipio.votos_validos) / 2) + 1):
@@ -88,10 +90,14 @@ def criar_video(codigo_municipio):
         "projectId": f"{template['projectId']}",
         "templateId":  f"{template['templateId']}",
         "parameters": parameters,
+        "options": {
+            "integrations": {
+                "integrationPassthrough": "Teste"
+            }
+        }
     }
     auth = HTTPBasicAuth(current_app.config["PLAINLY_API_KEY"], '')
     
-    print("aqui")
     response = requests.post(
         endpoint, 
         headers=headers, 
@@ -99,24 +105,15 @@ def criar_video(codigo_municipio):
         auth=auth
     )
     
-    """video = Video(
-        municipio_id=municipio.id,
-        data_criacao=datetime.datetime.now(),
-        titulo=f"Eleições Municípais: {municipio.nome} - {municipio.UF}",
-        descricao=f"Confira o resultado da eleição para prefeito de {municipio.nome} - {municipio.UF}",
-        plainly_url=None,
-        plainly_id=response.json()['id'],
-        plainly_state=response.json()['state'],
-        plainly_template_name=response.json()['projectName'],
-        plainly_template_id=response.json()['projectId'],
-        plainly_thumbnail_uri=""
-    )
-    db.session.add(video)
-    db.session.commit() """
-    
-    
-    #return jsonify(data)
-    return redirect(url_for('webui.index'))    
+    video = Video.query.filter_by(video_id = municipio.codigo_municipio).one_or_none()
+    if video:
+        video.plainly_id = response.json()['id']
+        video.plainly_state = response.json()['state']
+        video.plainly_template_name=response.json()['projectName']
+        video.plainly_template_id=response.json()['projectId']    
+
+    db.session.commit()
+    return redirect(url_for('webui.videos'))    
 
 
 def pegar_template(nm_candidatos):
@@ -174,8 +171,9 @@ def quebrar_linha(nome_candidato):
     return nome_candidato
     
 def videos():
+    municipios = Municipio.query.order_by(Municipio.totalizacao_final.desc()).all()
     videos = Video.query.order_by(Video.data_criacao.desc()).all()
-    return render_template('videos.html', videos=videos)
+    return render_template('videos.html', videos=videos, municipios=municipios)
 
 
 def video_lista():
@@ -225,13 +223,13 @@ def criar_feed():
     description.text = "Feed importação dos vídeos gerados de forma automática"
 
     link = ET.SubElement(channel, "link")
-    link.text = f"{request.host_url}rss"
+    link.text = f"{request.host_url}feed"
 
     lastBuildDate = ET.SubElement(channel, "lastBuildDate")
     lastBuildDate.text = rss_datetime.strftime("%a, %d %b %Y %H:%M:%S %z")
 
     for video in videos:
-        if video.plainly_state == 'DONE':
+        if video.plainly_state != 'DONE':
             tz = pytz.timezone("America/Sao_Paulo")
             # Item
             item = ET.SubElement(channel, "item")
@@ -239,11 +237,11 @@ def criar_feed():
             item_title.text = video.titulo
 
             item_link = ET.SubElement(item, "link")
-            item_link.text = f"{video.plainly_url}"
+            item_link.text = f"{video.video_uri}"
 
             item_guid = ET.SubElement(item, "guid")
             item_guid.set("isPermaLink", "false")
-            item_guid.text = video.plainly_id
+            item_guid.text = video.video_id
 
             item_description = ET.SubElement(item, "description")
             item_description.text = video.descricao
@@ -258,13 +256,13 @@ def criar_feed():
 
             item_media_content = ET.SubElement(item, "media:content")
             item_media_content.set(
-                "url", f"{video.plainly_url}"
+                "url", f"{request.host_url}static/videos/{video.video_uri}"
             )
             item_media_content.set("type", "video/mp4")
             item_media_content.set("duration", "57")
 
             item_media_thumbnail = ET.SubElement(item_media_content, "media:thumbnail")
-            item_media_thumbnail.set("url", video.plainly_thumbnail_uri)
+            item_media_thumbnail.set("url", f"{request.host_url}static/thumbs/{video.thumbnail_uri}")
 
     return Response(
         ET.tostring(rss, encoding="utf-8", xml_declaration=True),
@@ -287,78 +285,53 @@ def thumbs():
 def gerar_todos_os_thumbs():
     municipios = Municipio.query.all()
     
+    # for municipio in municipios:
+    #     video = Video.query.filter_by(codigo_municipio=municipio.codigo_municipio).one_or_none()
+    #     if video is None:
+        
+    #         parameters = {}
+    #         parameters["cidade"] = municipio.nome.upper()
+            
+    #         endpoint = "https://api.plainlyvideos.com/api/v2/renders"
+    #         headers = {
+    #             "Content-Type": "application/json"
+    #         }
+    #         data = {
+    #             "projectId": f"6ce3a7bf-6b1e-4713-9a1f-2eb69b5cc52a",
+    #             "templateId":  f"0fc45e21-603a-487e-a290-bec2ececafbe",
+    #             "parameters": parameters,
+    #         }
+    #         auth = HTTPBasicAuth(current_app.config["PLAINLY_API_KEY"], '')
+            
+    #         response = requests.post(
+    #             endpoint, 
+    #             headers=headers, 
+    #             json=data, 
+    #             auth=auth
+    #         )
+    #         video = Video(
+    #             codigo_municipio=municipio.codigo_municipio,
+    #             plainly_thumbnail_id=response.json()['id'],
+    #             plainly_thumbnail_state=response.json()['state'],
+    #         )
+    #         db.session.add(video)
+    #         db.session.commit()
+    #         print(video.plainly_thumbnail_id, video.plainly_thumbnail_state)
+    #         time.sleep(5)
+            
+    return redirect(url_for('webui.videos'))
+
+def download_thumbs():
+    municipios = Municipio.query.all()
+    
     for municipio in municipios:
-        thumb = Thumb.query.filter_by(municipio_id=municipio.id).one_or_none()
-        if thumb is None:
-        
-            parameters = {}
-            parameters["cidade"] = municipio.nm_ue
-            
-            endpoint = "https://api.plainlyvideos.com/api/v2/renders"
-            headers = {
-                "Content-Type": "application/json"
-            }
-            data = {
-                "projectId": f"b0617d4d-b3cf-4da3-86c3-b68a2e69441a",
-                "templateId":  f"c9552045-f7d4-46e1-b688-be89a1fb4acd",
-                "parameters": parameters,
-            }
-            auth = HTTPBasicAuth(current_app.config["PLAINLY_API_KEY"], '')
-            
-            response = requests.post(
-                endpoint, 
-                headers=headers, 
-                json=data, 
-                auth=auth
-            )
-            thumb = Thumb(
-                municipio_id=municipio.id,
-                plainly_id=response.json()['id'],
-                plainly_state=response.json()['state'],
-                plainly_thumbnail_uri=""
-            )
-            db.session.add(thumb)
-            db.session.commit()
-            
-            time.sleep(10)
-            """  response = requests.get(
-                    f"{endpoint}/{thumb.plainly_id}",
-                    headers=headers,
-                    auth=auth
-                )
-            
-            thumb.plainly_thumbnail_uri=response.json()['thumbnailUris']
-            db.session.commit() """
-        
-    return redirect(url_for('webui.thumbs_list'))
-
-def thumbs_list():
-    thumbs = Thumb.query.all()
-    return render_template('thumbs.html', thumbs=thumbs)
-
-
-def thumbs_update():
-    thumbs = Thumb.query.all()
-    for thumb in thumbs:
-        
-        if thumb.plainly_thumbnail_uri is None or thumb.plainly_thumbnail_uri == "":    
-            endpoint = "https://api.plainlyvideos.com/api/v2/renders"
-            headers = {
-                "Content-Type": "application/json"
-            }
-            auth = HTTPBasicAuth(current_app.config["PLAINLY_API_KEY"], '')
-
-            response = requests.get(
-                f"{endpoint}/{thumb.plainly_id}",
-                headers=headers,
-                auth=auth
-            )
-
-            thumb.plainly_thumbnail_uri=response.json()['thumbnailUris']
-            db.session.commit()
-            time.sleep(5)
-            
-    return redirect(url_for('webui.thumbs_list'))
+        # Check if image exist in app/static/thumbs
+        candidatos = Candidato.query.filter_by(codigo_municipio=municipio.codigo_municipio).all()
+        video = Video.query.filter_by(codigo_municipio=municipio.codigo_municipio).one_or_none()
+        video.titulo = gerar_yt_copy(municipio, candidatos, segundo_turno=True)['titulo']
+        db.session.commit()
+    
+    return redirect(url_for('webui.videos'))
 
 
 def terra_json(nome_normalizado):
@@ -371,3 +344,89 @@ def terra_json(nome_normalizado):
     }
     response = requests.get(url, params=params, headers=headers)
     return jsonify(response.json())
+
+def yt_copy(codigo_municipio):
+    municipio = Municipio.query.filter_by(codigo_municipio=codigo_municipio).one_or_none()
+    candidatos = candidatos = Candidato.query.filter(Candidato.codigo_municipio == municipio.codigo_municipio).order_by(Candidato.votos_apurados).all()
+    
+    segundo_turno = True
+    
+    for i, candidato in enumerate(candidatos, start=1):
+        if Decimal(candidato.votos_apurados) >= ((Decimal(municipio.votos_validos) / 2) + 1):
+            segundo_turno = False
+            break
+        else:
+            segundo_turno = True
+    
+    yt_copy = gerar_yt_copy(municipio, candidatos, segundo_turno)
+    return render_template('copy.html', yt_copy=yt_copy, municipio = municipio)
+
+def gerar_yt_copy(municipio, candidatos, segundo_turno=True):
+    
+    yt_copy = {}
+    
+    dias_da_semana = ['nesta Segunda-feira', 'nesta Terça-feira', 'nesta Quarta-feira', 'nesta Quinta-feira', 'nesta Sexta-feira', 'neste Sábado', 'neste Domingo']
+    
+    titulo = f"Resultado do 1° turno das Eleições 2024 em {municipio.nome}/{municipio.UF}"
+    tags = f"{municipio.nome}, Terra Nas Eleições, 1° Turno, Apuração, {municipio.UF}, Eleições Municipais"
+    candidatos_tags = []
+    
+    for candidato in candidatos:
+        candidatos_tags.append(f"{candidato.nome_urna.title()},{candidato.partido},")
+    
+    candidatos_tags = ', '.join(candidatos_tags)
+    
+    tags = candidatos_tags + tags
+    
+    if segundo_turno:
+        descricao = f"""O segundo turno das Eleições 2024 para prefeitura de {municipio.nome.title()}/{municipio.UF} será disputado entre {candidatos[0].nome_urna.title()} ({candidatos[0].partido}) e {candidatos[1].nome_urna.title()} ({candidatos[1].partido}). O Tribunal Superior Eleitoral (TSE) concluiu a totalização dos votos do primeiro turno às {municipio.ht} {dias_da_semana[datetime.datetime.now().weekday()]}, {datetime.datetime.now().day}.
+
+Segundo o TSE, com {municipio.percentual_votos_validos} dos votos apurados, {candidatos[0].nome_urna.title()} teve {candidatos[0].percentual_votos_apurados}% ({candidatos[0].votos_apurados} votos válidos) e {candidatos[1].nome_urna.title()}, {candidatos[1].percentual_votos_apurados}% ({candidatos[1].votos_apurados} votos válidos).
+    
+Os eleitores do município voltarão às urnas - no dia 27 de outubro, das 8h às 17h (horário de Brasília) - para decidir quem comandará a prefeitura pelos próximos quatros anos.
+    
+#Eleições2024 #{municipio.nome} #Apuração
+    
+Aviso: este conteúdo foi gerado automaticamente com base nos dados oficiais do Tribunal Superior Eleitoral (TSE). Informações como nomes, siglas, porcentagens de votos e data do pleito são atualizadas para refletir com precisão os resultados em diferentes municípios. Havendo novas informações relevantes, a reportagem será atualizada. Além disso, o percentual de cada candidato leva em conta os votos de todos os candidatos concorrentes, independente da situação jurídica. Consulte a situação dos candidatos no site do TSE
+            
+-------------
+Inscreva-se no canal do Terra no YouTube ▸ https://www.youtube.com/terra
+-------------
+Acompanhe as principais notícias do Brasil e do mundo no Terra ▸ https://www.terra.com.br
+-------------
+Siga o Terra nas redes sociais
+Facebook▸ https://www.facebook.com/terrabrasil
+Instagram ▸ http://instagram.com/terrabrasil
+TikTok ▸ https://www.tiktok.com/@terrabrasil
+Twitter ▸ https://twitter.com/terra
+WhatsApp ▸ https://whatsapp.com/channel/0029VaDGPXE0rGiN2XvTl03k
+"""
+            
+        
+    else:
+        descricao = f"""Com {candidatos[0].percentual_votos_apurados}% dos votos válidos, {candidatos[0].nome_urna} ({candidatos[0].partido}) se elegeu à prefeitura de {municipio.nome}/{municipio.UF} no primeiro turno das Eleições 2024. O Tribunal Superior Eleitoral (TSE) concluiu a totalização dos votos do primeiro turno às {municipio.ht.strptime("%Hh%m")} {dias_da_semana[datetime.datetime.now().weekday()]}, {datetime.datetime.now().day}.   
+            
+Aviso: este conteúdo foi gerado automaticamente com base nos dados oficiais do Tribunal Superior Eleitoral (TSE). Informações como nomes, siglas, porcentagens de votos e data do pleito são atualizadas para refletir com precisão os resultados em diferentes municípios. Havendo novas informações relevantes, a reportagem será atualizada. Além disso, o percentual de cada candidato leva em conta os votos de todos os candidatos concorrentes, independente da situação jurídica. Consulte a situação dos candidatos no site do TSE
+            
+#Eleições2024 #{municipio.nome} #Apuração
+            
+-------------
+Inscreva-se no canal do Terra no YouTube ▸ https://www.youtube.com/terra
+-------------
+Acompanhe as principais notícias do Brasil e do mundo no Terra ▸ https://www.terra.com.br
+-------------
+Siga o Terra nas redes sociais
+Facebook▸ https://www.facebook.com/terrabrasil
+Instagram ▸ http://instagram.com/terrabrasil
+TikTok ▸ https://www.tiktok.com/@terrabrasil
+Twitter ▸ https://twitter.com/terra
+WhatsApp ▸ https://whatsapp.com/channel/0029VaDGPXE0rGiN2XvTl03k            
+"""
+    
+    yt_copy = {
+        'titulo': titulo,
+        'tags': tags,
+        'descricao': descricao
+    }
+    
+    return yt_copy

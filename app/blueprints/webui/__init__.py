@@ -10,9 +10,9 @@ from .webui import delete_video
 from .webui import criar_feed
 from .webui import gerar_todos_os_thumbs
 from .webui import thumbs
-from .webui import thumbs_list
-from .webui import thumbs_update
 from .webui import terra_json
+from .webui import yt_copy
+from .webui import download_thumbs
 
 # Register blueprints
 bp = Blueprint("webui", __name__, template_folder="templates", static_folder="static")
@@ -49,14 +49,15 @@ bp.add_url_rule("/thumbs", view_func=gerar_todos_os_thumbs)
 thumbs.methods = ["GET"]
 bp.add_url_rule("/thumbs/api", view_func=thumbs)
 
-thumbs_list.methods = ["GET"]
-bp.add_url_rule("/thumbs/lista", view_func=thumbs_list)
-
-thumbs_update.methods = ["GET"]
-bp.add_url_rule("/thumbs/update", view_func=thumbs_update)
-
 terra_json.methods = ["GET"]
 bp.add_url_rule("/terra/<nome_normalizado>", view_func=terra_json)
+
+yt_copy.methods = ["GET"]
+bp.add_url_rule("/copy/<codigo_municipio>", view_func=yt_copy)
+
+download_thumbs.methods = ["GET"]
+bp.add_url_rule("/thumbs/download", view_func=download_thumbs)
+
 
 def init_app(app):
     with app.app_context():

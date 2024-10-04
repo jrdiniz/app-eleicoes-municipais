@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+    <div class="row py-4">
+        <div class="col-sm-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                  <li class="breadcrumb-item"><a href="{{ url_for('webui.index')}}">Home</a></li>
+                  <li class="breadcrumb-item active" aria-current="page">Copy para o Youtube {{ municipio.nome.title() }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-8">
+            <label for="exampleFormControlInput1" class="form-label">Título</label>
+            <input type="text" class="form-control" name="titulo" id="titulo" value="{{ yt_copy.titulo }}">
+        </div>
+        <div class="col-sm-8">
+            <label for="exampleFormControlInput1" class="form-label">Descrição</label>
+            <textarea class="form-control" name="descricao" id="descricao" rows="10">{{ yt_copy.descricao }}</textarea>
+        </div>
+        <div class="col-sm-8">
+            <label for="exampleFormControlInput1" class="form-label">Tags</label>
+            <textarea class="form-control" name="tags" id="tags" rows="5">{{ yt_copy.tags }}</textarea>
+        </div>
+    </div>
+</div>
+{% endblock %}
