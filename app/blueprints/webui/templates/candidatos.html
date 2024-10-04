@@ -23,6 +23,7 @@
                     <th>Nome na Urna</th>
                     <th>Número Urna</th>
                     <th>Sigla do Partido</th>
+                    <th>Situação</th>
                     <th>Votos</th>
                 </thead>
                 <tbody>
@@ -32,6 +33,7 @@
                         <td>{{ candidato.nome_urna.title() }}</td>
                         <td>{{ candidato.nro }}</td>
                         <td>{{ candidato.partido }}</td>
+                        <td>{{ candidato.situacao }}</td>
                         <td>{{ candidato.votos_apurados }}</td>
                     </tr>
                     {% endfor %}

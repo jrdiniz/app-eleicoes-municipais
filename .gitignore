@@ -278,5 +278,5 @@ dist
 # SvelteKit build / generate output
 .svelte-kit
 
-app/static/fotos_candidatos_prefeito/*
+app/static/videos/*
 fotos/*

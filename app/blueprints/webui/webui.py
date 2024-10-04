@@ -269,19 +269,6 @@ def criar_feed():
         mimetype="application/xml",
     )
 
-def thumbs():
-    thumbs = Thumb.query.all()
-    
-    result = []
-    for thumb in thumbs:
-        if thumb.plainly_thumbnail_uri:
-            item = {}
-            municipio = Municipio.query.filter_by(id=thumb.municipio_id).one_or_none()
-            item['municipio'] = municipio.nm_ue.lower()
-            item['plainly_thumbnail_uri'] = thumb.plainly_thumbnail_uri
-            result.append(item)
-    return jsonify(result)
-
 def gerar_todos_os_thumbs():
     municipios = Municipio.query.all()
     
@@ -344,6 +331,59 @@ def terra_json(nome_normalizado):
     }
     response = requests.get(url, params=params, headers=headers)
     return jsonify(response.json())
+
+def atualizar_apuracao():
+    municipios = Municipio.query.all()
+    url = "https://p1-cloud.trrsf.com/api/eleicoes2024-api/resultados"
+    headers = {
+        "Content-Type": "application/json"
+    }
+    for municipio in municipios:
+        params = {
+            "municipio": municipio.nome_normalizado
+        }
+        response = requests.get(url, params=params, headers=headers)
+        if response.status_code == 200:
+            apuracao = response.json()['0']
+            
+            municipio.ht = apuracao['ht']
+            municipio.dt = datetime.datetime.strptime(apuracao['dt'], '%d/%m/%Y').date()
+            municipio.matematicamente_definido = apuracao['matematicamente_definido'] or 'n'
+            municipio.votos_validos = apuracao['votos_validos']
+            municipio.percentual_votos_validos = apuracao['percentual_votos_validos']
+            municipio.votos_branco = apuracao['votos_branco']
+            municipio.percentual_votos_branco = apuracao['percentual_votos_branco']
+            municipio.votos_nulo = apuracao['votos_nulo']
+            municipio.percentual_votos_nulo = apuracao['percentual_votos_nulo']
+            municipio.totalizacao_final = apuracao['totalizacao_final']
+            municipio.abstencao = apuracao['abstencao']
+            municipio.percentual_abstencao = apuracao['percentual_abstencao']
+            municipio.percentual_secoes_totalizadas = apuracao['percentual_secoes_totalizadas']
+            
+            for cand in apuracao['candidatos']:
+                candidato = Candidato.query.filter_by(sqcand=cand['sqcand']).one_or_none()
+                if candidato:
+                    candidato.nro = cand['nro']
+                    candidato.seq = cand['seq']
+                    candidato.situacao = cand['situacao']
+                    candidato.destinacao_voto = cand['destinacao_voto']
+                    candidato.votos_apurados = cand['votos_apurados']
+                    candidato.percentual_votos_apurados = cand['percentual_votos_apurados']
+                    
+                    print(candidato)
+                else:
+                    print(cand['nro'])
+                    print(cand['seq'])
+                    print(cand['situacao'])
+                    print(cand['destinacao_voto'])
+                    print(cand['votos_apurados'])
+                    print(cand['percentual_votos_apurados'])
+                    print(cand)
+                
+            
+            
+                
+    return redirect(url_for('webui.index'))
 
 def yt_copy(codigo_municipio):
     municipio = Municipio.query.filter_by(codigo_municipio=codigo_municipio).one_or_none()

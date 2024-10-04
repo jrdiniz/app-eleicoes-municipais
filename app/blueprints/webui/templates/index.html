@@ -11,6 +11,8 @@
         </div>
         <div class="col-sm-12">
             <h1>Municipíos com mais de 200 mil eleitores</h1>
+            <a class="btn btn-primary" href="{{ url_for('webui.videos')}}"><i class="bi bi-play-btn-fill"></i> Lista de Vídeos</a>
+            <a class="btn btn-warning" href="{{ url_for('webui.atualizar_apuracao')}}"><i class="bi bi-arrow-clockwise"></i> Atualizar Resultados</a>
         </div> 
     </div>
     <div class="row">
@@ -21,7 +23,8 @@
                     <th>Estado</th>
                     <th>Município</th>
                     <th>Candidatos</th>
-                    <th>Matemáticamente Definido</th>
+                    <th>Votos Válidos</th>
+                    <th>Mat. Definido</th>
                     <th>Apuração</th>
                     <th></th>
                 </thead>
@@ -32,7 +35,8 @@
                         <td>{{ municipio.UF }}</td>
                         <td>{{ municipio.nome }}</td>
                         <td>{{ municipio.candidatos|count }}</td>
-                        <td>
+                        <td>{{ municipio.percentual_votos_validos}}%</td>
+                        <td class="col-sm-2">
                             {% if municipio.matematicamente_definido == "s" %}
                             <span class="badge text-bg-success">Sim</span>
                             {% elif municipio.matematicamente_definido == "n" %}
@@ -52,7 +56,7 @@
                         <td>
                             <a href="{{ url_for('webui.terra_json', nome_normalizado=municipio.nome_normalizado)}}" class="btn btn-dark" target="_blank"><i class="bi bi-braces" aria-label="JSON"></i></a>
                             <a href="{{ url_for('webui.candidatos', codigo_municipio = municipio.codigo_municipio)}}" class="btn btn-primary"><i class="bi bi-person-bounding-box"></i></a>
-                            <a href="{{ url_for('webui.criar_video', codigo_municipio = municipio.codigo_municipio)}}" class="btn btn-dark"><i class="bi bi-film"></i> Gerar Vídeo</a>
+                            <a href="{{ url_for('webui.criar_video', codigo_municipio = municipio.codigo_municipio)}}" class="btn btn-dark"><i class="bi bi-film"></i></a>
                             <a href="{{ url_for('webui.yt_copy', codigo_municipio = municipio.codigo_municipio)}}" class="btn btn-info"><i class="bi bi-journal-text"></i></a>
 
                         </td>
