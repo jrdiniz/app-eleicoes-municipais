@@ -13,6 +13,7 @@ from .webui import terra_json
 from .webui import yt_copy
 from .webui import download_thumbs
 from .webui import atualizar_apuracao
+from .webui import atualizar_video_status
 
 # Register blueprints
 bp = Blueprint("webui", __name__, template_folder="templates", static_folder="static")
@@ -57,6 +58,9 @@ bp.add_url_rule("/thumbs/download", view_func=download_thumbs)
 
 atualizar_apuracao.methods = ["GET"]
 bp.add_url_rule("/apuracao", view_func=atualizar_apuracao)
+
+atualizar_video_status.methods = ["GET"]
+bp.add_url_rule("/video/status", view_func=atualizar_video_status)
 
 def init_app(app):
     with app.app_context():
