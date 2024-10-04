@@ -56,7 +56,7 @@ def criar_video(codigo_municipio):
         parameters[f"candidato{i}Partido"] = candidato.partido
         parameters[f"candidato{i}Percentual"] = f"{candidato.percentual_votos_apurados} %"
         parameters[f"candidato{i}Votos"] = f"{candidato.votos_apurados} votos"
-        parameters[f"candidato{i}Foto"] = f"https://eleicoes.gorobei.net/static/fotos/F{municipio.UF}{candidato.sqcand}_div.jpg"
+        parameters[f"candidato{i}Foto"] = f"https://eleicoes.gorobei.net/static/fotos/{candidato.foto}"
     
     for i, candidato in enumerate(candidatos, start=1):
         if Decimal(candidato.votos_apurados) >= ((Decimal(municipio.votos_validos) / 2) + 1):
