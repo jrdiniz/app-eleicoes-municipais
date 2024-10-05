@@ -9,7 +9,7 @@
     application_logfile: 'eleicoes'
     application_path: '/u/htdocs/webpoint'
 
-    mysql_address: "10.224.248.87"
+    mysql_address: "10.235.136.182"
     mysql_user: "{{ application_user }}"
     mysql_database: "eleicoes_db"
     mysql_password: "DMr61uAYQhtcgjEjFlyfLsC5VYn"
