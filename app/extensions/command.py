@@ -178,6 +178,8 @@ def init_app(app):
                             candidato_foto = f"{result.UF}{candidato_data['sqcand']}_div.jpg"
                         elif os.path.exists(f"static/fotos/{result.UF}{candidato_data['sqcand']}_div.jpeg"):
                             candidato_foto = f"{result.UF}{candidato_data['sqcand']}_div.jpeg"
+                        else:
+                            print(f"Foto não encontrada {result.UF}{candidato_data['sqcand']}")
                             
                         candidato = Candidato(
                             nro=candidato_data['nro'],
@@ -212,14 +214,15 @@ def init_app(app):
                     result.abstencao = data['abstencao']
                     result.percentual_abstencao = data['percentual_abstencao']
                     
-                    candidatos = Candidato.query.filter_by(codigo_municipio=result.codigo_municipio).all()  
-                    for candidato in candidatos:
+                    for candidato in result.candidatos:
                         # check if foto exist in static/fotos
                         candidato_foto = ""
-                        if os.path.exists(f"static/fotos/{result.UF}{candidato_data['sqcand']}_div.jpg"):
-                            candidato_foto = f"{result.UF}{candidato_data['sqcand']}_div.jpg"
-                        elif os.path.exists(f"static/fotos/{result.UF}{candidato_data['sqcand']}_div.jpeg"):
-                            candidato_foto = f"{result.UF}{candidato_data['sqcand']}_div.jpeg"
+                        if os.path.exists(f"static/fotos/{result.UF}{candidato.sqcand}_div.jpg"):
+                            candidato_foto = f"{result.UF}{candidato.sqcand}_div.jpg"
+                        elif os.path.exists(f"static/fotos/{result.UF}{candidato.sqcand}_div.jpeg"):
+                            candidato_foto = f"{result.UF}{candidato.sqcand}_div.jpeg"
+                        else:
+                            print(f"Foto não encontrada {result.UF}{candidato.sqcand}_div")
                         candidato.foto = candidato_foto
                 db.session.commit()
             else:
