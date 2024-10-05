@@ -391,12 +391,39 @@ def atualizar_apuracao():
                     print(cand['destinacao_voto'])
                     print(cand['votos_apurados'])
                     print(cand['percentual_votos_apurados'])
-                    print(cand)
-                
-            
-            
-                
+                    print(cand)            
     return redirect(url_for('webui.index'))
+
+def atualizar_video_status():
+    videos = Video.query.filter_by(Video.plainly_state != "DONE", Video.plainly_state != "INVALID").all()
+    endpoint = "https://api.plainlyvideos.com/api/v2/renders"
+    headers = {
+        "Content-Type": "application/json"
+    }
+    auth = HTTPBasicAuth(current_app.config["PLAINLY_API_KEY"], '')
+    for video in videos:
+        response = requests.get(
+            f"{endpoint}/{video.plainly_id}",
+            headers=headers,
+            auth=auth
+        )
+        video.plainly_state = response.json()['state']
+        video.plainly_url = response.json()['output']
+        db.session.commit()
+
+        response = requests.get(video.plainly_url)
+
+        # Check if videos directory exists
+        if not os.path.exists("/app/static/videos"):
+            os.makedirs("/app/static/videos")
+
+        with open(f"/app/static/videos/{video.video_id}.mp4", "wb") as f:
+            f.write(response.content)
+            video.video_uri = f"{video.video_id}.mp4"
+            f.close()
+
+        return redirect(url_for('webui.videos'))
+
 
 def yt_copy(codigo_municipio):
     municipio = Municipio.query.filter_by(codigo_municipio=codigo_municipio).one_or_none()
