@@ -38,9 +38,9 @@
                                 </td>
                                 <td class="col-sm-3">{{ video.titulo }}</td>
                                 <td>
-                                    {% if video.plainly_state == "DONE" and video.plainly_url != '' %}
+                                    {% if video.plainly_state == "DONE" %}
                                     <span class="badge text-bg-success">Pronto</span>
-                                    {% elif video.plainly_state == "DONE" %}
+                                    {% elif video.plainly_state == "IN_PROGRESS" %}
                                     <span class="badge text-bg-warning">Aguarde</span>
                                     {% elif video.plainly_state == "INVALID" %}
                                     <span class="badge text-bg-danger">Erro</span>

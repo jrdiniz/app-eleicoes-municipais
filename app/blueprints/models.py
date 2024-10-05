@@ -54,7 +54,7 @@ class Video(db.Model):
     video_id = db.Column(db.String(10), primary_key=True) # codigo_municipio
     titulo = db.Column(db.String(255), nullable=True)
     descricao = db.Column(db.Text, nullable=True)
-    tag = db.Column(db.String(255), nullable=True)
+    tag = db.Column(db.Text, nullable=True)
     data_criacao = db.Column(db.DateTime, nullable=False, default=datetime.datetime.now)
     thumbnail_uri = db.Column(db.Text, nullable=True)
     video_uri = db.Column(db.Text, nullable=True)

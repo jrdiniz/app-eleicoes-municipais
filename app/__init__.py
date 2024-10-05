@@ -46,6 +46,13 @@ def celery_init_app(app: Flask) -> Celery:
     celery_app = Celery(app.name, task_cls=FlaskTask)
     configuration.init_app(app)
     celery_app.config_from_object(app.config["CELERY"])
+    celery_app.conf.task_queues = {
+        'default': {'exchange': 'default', 'binding_key': 'default'},
+        'eleicoes_queue': {'exchange': 'eleicoes_queue', 'binding_key': 'eleicoes_queue'}
+    }
+    celery_app.conf.task_routes = {
+        'app.blueprints.tasks.*': {'queue': 'eleicoes_queue'}
+    }
     celery_app.set_default()
     app.extensions["celery"] = celery_app
     celery_app.autodiscover_tasks(['app.blueprints.tasks'])

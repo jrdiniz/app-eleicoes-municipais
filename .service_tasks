@@ -6,7 +6,7 @@ After=network.target
 User=eleicoes
 Group=webpoint
 WorkingDirectory={{ application_path }}/{{ application_user }}/public_html/
-ExecStart={{ application_path }}/{{ application_user }}/public_html/env/bin/celery -A tasks worker -B --loglevel INFO --logfile={{ application_path }}/{{ application_user }}/public_html/tasks.log
+ExecStart={{ application_path }}/{{ application_user }}/public_html/env/bin/celery -A tasks worker -B --queues=eleicoes_queue --loglevel INFO --logfile={{ application_path }}/{{ application_user }}/public_html/tasks.log 
 Restart=always
 Type=simple
 

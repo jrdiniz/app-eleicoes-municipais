@@ -25,7 +25,7 @@ def task_pegar_atualizacao():
     municipios = Municipio.query.all()
     for municipio in municipios:
         task_atualizar_apuracao.delay(municipio.codigo_municipio)
-        time.sleep(5)
+        time.sleep(3)
 
 @shared_task(ignore_result=False)
 def task_atualizar_apuracao(codigo_municipio):
@@ -73,13 +73,6 @@ def task_atualizar_apuracao(codigo_municipio):
 
             db.session.commit()
             return f"Atualizado em {datetime.datetime.now()} - {municipio.nome}"
-
-@shared_task(ignore_result=False)
-def task_pegar_video():
-    videos = Video.query.all()
-    for video in videos:
-        task_atualizar_video.delay(video.video_id)
-            
             
 @shared_task(ignore_result=False)
 def task_atualizar_video_state():
@@ -100,43 +93,14 @@ def task_atualizar_video_state():
         )
         if response.status_code == 200:    
             video.plainly_state = response.json()['state']
-            db.session.commit()
-            
-            return f"Status do vídeo {video.titulo}, planily_id {video.plainly_id} alterado para {video.plainly_state}"
-        time.sleep(5)
-
-@shared_task(ignore_result=False)
-def task_atualizar_video(video_id):
-    video = Video.query.filter((Video.video_id == video_id) & (Video.plainly_state == 'DONE')).one_or_none()
-    endpoint = "https://api.plainlyvideos.com/api/v2/renders"
-    headers = {
-        "Content-Type": "application/json"
-    }
-    auth = HTTPBasicAuth(current_app.config["PLAINLY_API_KEY"], '')
-    if video is not None:
-        response = requests.get(
-            f"{endpoint}/{video.plainly_id}",
-            headers=headers,
-            auth=auth
-        )
-        video.plainly_state = response.json()['state']
-        video.plainly_url = response.json()['output']
-        db.session.commit()
-        task_download_video.delay(video.video_id)
-        return f"Status do vídeo {video.titulo}, planily_id {video.plainly_id} alterado para {video.plainly_state}"
-       
-    
-@shared_task(ignore_result=False)
-def task_download_video(video_id):
-    video = Video.query.filter_by(video_id = video_id).one_or_none()
-    if video is not None:
-        response = requests.get(video.plainly_url)
-        if response.status_code == 200:
-            # check if video exist in filesystem
-            if video.video_uri is None or video.video_uri == "":    
-                with open(f"app/static/videos/{video.video_id}.mp4", "wb") as f:
+            if video.plainly_state == 'DONE':
+                video.plainly_url = response.json()['output']
+                with open(f"{current_app.config['BASE_DIR']}/app/static/videos/{video.video_id}.mp4", "wb") as f:
                     f.write(response.content)
-                    video.video_uri = f"videos/{video.video_id}.mp4"
+                    video.video_uri = f"{video.video_id}.mp4"
                     db.session.commit()
                     f.close()
-                    return f"Download do Vídeo {video.titulo} realizado com sucesso"
+            db.session.commit()
+            return f"Status do vídeo {video.titulo}, planily_id {video.plainly_id} alterado para {video.plainly_state}"
+        time.sleep(3)
+
