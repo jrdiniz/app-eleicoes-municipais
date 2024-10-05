@@ -174,10 +174,10 @@ def init_app(app):
                         
                         # check if foto exist in static/fotos
                         candidato_foto = ""
-                        if os.path.exists(f"static/fotos/{municipio.UF}{candidato_data['sqcand']}_div.jpg"):
-                            candidato_foto = "{municipio.UF}{candidato_data['sqcand']}_div.jpg"
-                        elif os.path.exists(f"static/fotos/{municipio.UF}{candidato_data['sqcand']}_div.jpeg")
-                            candidato_foto = "{municipio.UF}{candidato_data['sqcand']}_div.jpg"
+                        if os.path.exists(f"static/fotos/{result.UF}{candidato_data['sqcand']}_div.jpg"):
+                            candidato_foto = f"{result.UF}{candidato_data['sqcand']}_div.jpg"
+                        elif os.path.exists(f"static/fotos/{result.UF}{candidato_data['sqcand']}_div.jpeg"):
+                            candidato_foto = f"{result.UF}{candidato_data['sqcand']}_div.jpeg"
                             
                         candidato = Candidato(
                             nro=candidato_data['nro'],
@@ -199,8 +199,6 @@ def init_app(app):
                     result.nome = data['nome']
                     result.nome_normalizado = data['nome_normalizado']
                     result.UF = data['UF']
-                    result.dt = datetime.strptime(data['dt'], '%d/%m/%Y').date()
-                    result.ht = data['ht']
                     result.matematicamente_definido = data['matematicamente_definido']
                     result.totalizacao_final = data['totalizacao_final']
                     result.total_votos = data['total_votos']
@@ -212,7 +210,17 @@ def init_app(app):
                     result.votos_nulo = data['votos_nulo']
                     result.percentual_votos_nulo = data['percentual_votos_nulo']
                     result.abstencao = data['abstencao']
-                    result.percentual_abstencao = data['percentual_abstencao']  
+                    result.percentual_abstencao = data['percentual_abstencao']
+                    
+                    candidatos = Candidato.query.filter_by(codigo_municipio=result.codigo_municipio).all()  
+                    for candidato in candidatos:
+                        # check if foto exist in static/fotos
+                        candidato_foto = ""
+                        if os.path.exists(f"static/fotos/{result.UF}{candidato_data['sqcand']}_div.jpg"):
+                            candidato_foto = f"{result.UF}{candidato_data['sqcand']}_div.jpg"
+                        elif os.path.exists(f"static/fotos/{result.UF}{candidato_data['sqcand']}_div.jpeg"):
+                            candidato_foto = f"{result.UF}{candidato_data['sqcand']}_div.jpeg"
+                        candidato.foto = candidato_foto
                 db.session.commit()
             else:
                 print(f"Error: {response.status_code} - {response.text}")
