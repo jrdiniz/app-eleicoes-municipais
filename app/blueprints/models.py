@@ -11,7 +11,7 @@ class Municipio(db.Model):
     nome_normalizado = db.Column(db.String(100), nullable=False)
     UF = db.Column(db.String(2), nullable=False)
     dt = db.Column(db.Date, nullable=False, default=datetime.date.today)
-    ht = db.Column(db.Time, nullable=False, default=datetime.datetime.now().time()
+    ht = db.Column(db.Time, nullable=False, default=datetime.datetime.now().time())
     matematicamente_definido = db.Column(db.String(1), nullable=False)
     totalizacao_final = db.Column(db.String(1), nullable=False)
     total_votos = db.Column(db.String(20), nullable=False)
