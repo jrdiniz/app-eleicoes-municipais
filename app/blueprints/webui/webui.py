@@ -14,6 +14,8 @@ from flask import url_for
 from flask import render_template
 from flask import current_app
 from flask import jsonify
+from flask import send_file
+from flask import abort
 from io import StringIO
 
 from app.blueprints.models import Candidato
@@ -42,6 +44,7 @@ def candidatos(codigo_municipio):
 def criar_video(codigo_municipio):
     municipio = Municipio.query.filter_by(codigo_municipio=codigo_municipio).first_or_404()
     candidatos = Candidato.query.filter(Candidato.codigo_municipio == codigo_municipio).order_by(Candidato.votos_apurados).all()
+    segundo_turno = True
 
     # Pega as configurações do template conforme o número de candidatos
     template = pegar_template(len(candidatos))
@@ -62,24 +65,26 @@ def criar_video(codigo_municipio):
         if Decimal(candidato.votos_apurados) >= ((Decimal(municipio.votos_validos) / 2) + 1):
             parameters[f"turnoResultado"] = "Não haverá segundo turno"
             parameters[f"indicadorEleito"] = "100"
+            segundo_turno = False
             break
         else:
             parameters[f"turnoResultado"] = "Haverá segundo turno"
             parameters[f"indicador2Turno"] = "100"
+            segundo_turno = True
     
     # Abstenções
     parameters[f"abstencaoPercentual"] = f"{municipio.percentual_abstencao} %"
     
     # Brancos e Nulos Percentual
-    percentual_votos_nulos_brancos = municipio.percentual_votos_branco + municipio.percentual_votos_nulo
-    parameters[f"brancosNulosPercentual"] = f"{percentual_votos_nulos_brancos} %"
+    percentual_votos_nulos_brancos = "{:.2f} %".format(Decimal(municipio.votos_branco) + Decimal(municipio.votos_nulo))
+    parameters[f"brancosNulosPercentual"] = f"{percentual_votos_nulos_brancos}"
     
     # Brancos e Nulos Total
-    votos_nulos_brancos = municipio.votos_branco + municipio.votos_nulo
+    votos_nulos_brancos = Decimal(municipio.votos_branco) + Decimal(municipio.votos_nulo)
     parameters[f"brancosNulosTotal"] = f"{votos_nulos_brancos}"
     
     # Votos Válidos
-    parameters[f"votosValidos"] = f"Voto válidos {municipio.votos_validos} ({municipio.percentual_votos_validos}%), fonte TSE votos"
+    parameters[f"votosValidos"] = f"Votos válidos {municipio.votos_validos} ({municipio.percentual_votos_validos}%), fonte TSE"
     
     endpoint = "https://api.plainlyvideos.com/api/v2/renders"
     headers = {
@@ -106,11 +111,16 @@ def criar_video(codigo_municipio):
     )
     
     video = Video.query.filter_by(video_id = municipio.codigo_municipio).one_or_none()
+    yt_copy = gerar_yt_copy(municipio, candidatos, segundo_turno)
     if video:
+        video.data_criacao = datetime.datetime.now()
         video.plainly_id = response.json()['id']
         video.plainly_state = response.json()['state']
         video.plainly_template_name=response.json()['projectName']
-        video.plainly_template_id=response.json()['projectId']    
+        video.plainly_template_id=response.json()['projectId']
+        video.titulo = yt_copy['titulo']
+        video.descricao = yt_copy['descricao']
+        video.tag = yt_copy['tags']
 
     db.session.commit()
     return redirect(url_for('webui.videos'))    
@@ -176,28 +186,13 @@ def videos():
     return render_template('videos.html', videos=videos, municipios=municipios)
 
 
-def video_lista():
-    videos = Video.query.order_by(Video.data_criacao.desc()).all()
-    endpoint = "https://api.plainlyvideos.com/api/v2/renders"
-    headers = {
-        "Content-Type": "application/json"
-    }
-    auth = HTTPBasicAuth(current_app.config["PLAINLY_API_KEY"], '')
-
-    for video in videos:
-        if video.plainly_state != 'PENDING' or video.plainly_state != 'INVALID':
-            response = requests.get(
-                f"{endpoint}/{video.plainly_id}",
-                headers=headers,
-                auth=auth
-            )
-            video.plainly_state = response.json()['state']
-            video.plainly_url = response.json()['output']
-            video.plainly_thumbnail_uri=response.json()['thumbnailUris']
-            db.session.commit()
-            
+def update_video_lista():
+    videos = Video.query.order_by(Video.data_criacao.desc()).all()            
     return render_template('partials/_video_lista.html', videos = videos)
 
+def update_apuracao_lista():
+    municipios = db.session.query(Municipio).order_by(Municipio.totalizacao_final.desc()).all()
+    return render_template('partials/_apuracao_lista.html', municipios=municipios)
 
 def delete_video(video_id):
     video = Video.query.get(video_id)
@@ -229,7 +224,7 @@ def criar_feed():
     lastBuildDate.text = rss_datetime.strftime("%a, %d %b %Y %H:%M:%S %z")
 
     for video in videos:
-        if video.plainly_state != 'DONE':
+        if video.plainly_state == 'DONE':
             tz = pytz.timezone("America/Sao_Paulo")
             # Item
             item = ET.SubElement(channel, "item")
@@ -237,7 +232,7 @@ def criar_feed():
             item_title.text = video.titulo
 
             item_link = ET.SubElement(item, "link")
-            item_link.text = f"{video.video_uri}"
+            item_link.text = f"{video.plainly_url}"
 
             item_guid = ET.SubElement(item, "guid")
             item_guid.set("isPermaLink", "false")
@@ -256,7 +251,7 @@ def criar_feed():
 
             item_media_content = ET.SubElement(item, "media:content")
             item_media_content.set(
-                "url", f"{request.host_url}static/videos/{video.video_uri}"
+                "url", f"{video.plainly_url}"
             )
             item_media_content.set("type", "video/mp4")
             item_media_content.set("duration", "57")
@@ -268,6 +263,37 @@ def criar_feed():
         ET.tostring(rss, encoding="utf-8", xml_declaration=True),
         mimetype="application/xml",
     )
+
+def vmix():
+    municipios = Municipio.query.all()
+    capitais_brasil = [
+        "Rio de Janeiro", "São Paulo", "Belo Horizonte", "Vitória",
+        "Salvador", "Fortaleza", "Natal", "João Pessoa", "Recife",
+        "Maceió", "Aracaju", "Teresina", "Palmas", "São Luís",
+        "Belém", "Macapá", "Manaus", "Boa Vista", "Porto Velho",
+        "Rio Branco", "Cuiabá", "Campo Grande", "Goiânia", "Curitiba",
+        "Florianópolis", "Porto Alegre"
+    ]
+    data = []
+    
+    for municipio in municipios:
+        if municipio.nome in capitais_brasil:
+            item = {
+                'cidade': municipio.nome,
+                'uf': municipio.UF,
+                'percentual_brancos_nulos':"{:.2f} %".format(Decimal(municipio.votos_branco) + Decimal(municipio.votos_nulo)),
+                'percentual_secoes_totalizadas':f"{municipio.percentual_secoes_totalizadas} %",
+            }
+            # Sort candidatos by percentual_votos_apurados in descending order
+            sorted_candidatos = sorted(municipio.candidatos, key=lambda c: c.percentual_votos_apurados, reverse=True)
+            for num, candidato in enumerate(sorted_candidatos, start=1):
+                item[f"candidato_{num}"] = candidato.nome_urna
+                item[f"candidato_{num}_partido"] = candidato.partido
+                item[f"candidato_{num}_percentual_votos"] = f"{candidato.percentual_votos_apurados}%"
+            data.append(item)
+    
+    return jsonify(data)
+
 
 def gerar_todos_os_thumbs():
     municipios = Municipio.query.all()
@@ -307,19 +333,6 @@ def gerar_todos_os_thumbs():
     #         time.sleep(5)
             
     return redirect(url_for('webui.videos'))
-
-def download_thumbs():
-    municipios = Municipio.query.all()
-    
-    for municipio in municipios:
-        # Check if image exist in app/static/thumbs
-        candidatos = Candidato.query.filter_by(codigo_municipio=municipio.codigo_municipio).all()
-        video = Video.query.filter_by(codigo_municipio=municipio.codigo_municipio).one_or_none()
-        video.titulo = gerar_yt_copy(municipio, candidatos, segundo_turno=True)['titulo']
-        db.session.commit()
-    
-    return redirect(url_for('webui.videos'))
-
 
 def terra_json(nome_normalizado):
     url = "https://p1-cloud.trrsf.com/api/eleicoes2024-api/resultados"
@@ -419,15 +432,15 @@ def gerar_yt_copy(municipio, candidatos, segundo_turno=True):
     tags = candidatos_tags + tags
     
     if segundo_turno:
-        descricao = f"""O segundo turno das Eleições 2024 para prefeitura de {municipio.nome.title()}/{municipio.UF} será disputado entre {candidatos[0].nome_urna.title()} ({candidatos[0].partido}) e {candidatos[1].nome_urna.title()} ({candidatos[1].partido}). O Tribunal Superior Eleitoral (TSE) concluiu a totalização dos votos do primeiro turno às {municipio.ht} {dias_da_semana[datetime.datetime.now().weekday()]}, {datetime.datetime.now().day}.
+        descricao = f"""O segundo turno das Eleições 2024 para prefeitura de {municipio.nome.title()}/{municipio.UF} será disputado entre {candidatos[0].nome_urna.title()} ({candidatos[0].partido}) e {candidatos[1].nome_urna.title()} ({candidatos[1].partido}). O Tribunal Superior Eleitoral (TSE) concluiu a totalização dos votos do primeiro turno às {municipio.ht} {dias_da_semana[municipio.dt.weekday()]}, {municipio.dt.day}.
 
-Segundo o TSE, com {municipio.percentual_votos_validos} dos votos apurados, {candidatos[0].nome_urna.title()} teve {candidatos[0].percentual_votos_apurados}% ({candidatos[0].votos_apurados} votos válidos) e {candidatos[1].nome_urna.title()}, {candidatos[1].percentual_votos_apurados}% ({candidatos[1].votos_apurados} votos válidos).
+Segundo o TSE, com {municipio.percentual_votos_validos}% dos votos válidos e {municipio.percentual_secoes_totalizadas}% das seções apuradas, {candidatos[0].nome_urna.title()} teve {candidatos[0].percentual_votos_apurados}% ({candidatos[0].votos_apurados} votos válidos) e {candidatos[1].nome_urna.title()}, {candidatos[1].percentual_votos_apurados}% ({candidatos[1].votos_apurados} votos válidos).
     
-Os eleitores do município voltarão às urnas - no dia 27 de outubro, das 8h às 17h (horário de Brasília) - para decidir quem comandará a prefeitura pelos próximos quatros anos.
+Os eleitores do município voltarão às urnas - no dia 27 de outubro, das 8h às 17h (horário de Brasília), para decidir quem comandará a prefeitura pelos próximos quatros anos.
     
 #Eleições2024 #{municipio.nome} #Apuração
     
-Aviso: este conteúdo foi gerado automaticamente com base nos dados oficiais do Tribunal Superior Eleitoral (TSE). Informações como nomes, siglas, porcentagens de votos e data do pleito são atualizadas para refletir com precisão os resultados em diferentes municípios. Havendo novas informações relevantes, a reportagem será atualizada. Além disso, o percentual de cada candidato leva em conta os votos de todos os candidatos concorrentes, independente da situação jurídica. Consulte a situação dos candidatos no site do TSE
+Aviso: este conteúdo foi gerado automaticamente com base nos dados oficiais do Tribunal Superior Eleitoral (TSE). Informações como nomes, siglas, porcentagens de votos e data do pleito são atualizadas para refletir com precisão os resultados em diferentes municípios. Além disso, o percentual de cada candidato leva em conta os votos de todos os candidatos concorrentes, independente da situação jurídica. Consulte a situação dos candidatos no site do TSE
             
 -------------
 Inscreva-se no canal do Terra no YouTube ▸ https://www.youtube.com/terra
@@ -446,7 +459,7 @@ WhatsApp ▸ https://whatsapp.com/channel/0029VaDGPXE0rGiN2XvTl03k
     else:
         descricao = f"""Com {candidatos[0].percentual_votos_apurados}% dos votos válidos, {candidatos[0].nome_urna} ({candidatos[0].partido}) se elegeu à prefeitura de {municipio.nome}/{municipio.UF} no primeiro turno das Eleições 2024. O Tribunal Superior Eleitoral (TSE) concluiu a totalização dos votos do primeiro turno às {municipio.ht.strptime("%Hh%m")} {dias_da_semana[datetime.datetime.now().weekday()]}, {datetime.datetime.now().day}.   
             
-Aviso: este conteúdo foi gerado automaticamente com base nos dados oficiais do Tribunal Superior Eleitoral (TSE). Informações como nomes, siglas, porcentagens de votos e data do pleito são atualizadas para refletir com precisão os resultados em diferentes municípios. Havendo novas informações relevantes, a reportagem será atualizada. Além disso, o percentual de cada candidato leva em conta os votos de todos os candidatos concorrentes, independente da situação jurídica. Consulte a situação dos candidatos no site do TSE
+Aviso: este conteúdo foi gerado automaticamente com base nos dados oficiais do Tribunal Superior Eleitoral (TSE). Informações como nomes, siglas, porcentagens de votos e data do pleito são atualizadas para refletir com precisão os resultados em diferentes municípios. Além disso, o percentual de cada candidato leva em conta os votos de todos os candidatos concorrentes, independente da situação jurídica. Consulte a situação dos candidatos no site do TSE
             
 #Eleições2024 #{municipio.nome} #Apuração
             

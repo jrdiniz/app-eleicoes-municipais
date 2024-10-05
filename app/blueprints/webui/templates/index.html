@@ -12,10 +12,9 @@
         <div class="col-sm-12">
             <h1>Municipíos com mais de 200 mil eleitores</h1>
             <a class="btn btn-primary" href="{{ url_for('webui.videos')}}"><i class="bi bi-play-btn-fill"></i> Lista de Vídeos</a>
-            <a class="btn btn-warning" href="{{ url_for('webui.atualizar_apuracao')}}"><i class="bi bi-arrow-clockwise"></i> Atualizar Resultados</a>
         </div> 
     </div>
-    <div class="row">
+    <div class="row" hx-get="{{ url_for('webui.update_apuracao_lista')}}" hx-swap="outerHTML" hx-trigger="every 5s">
         <div class="col-sm-12">
             <table class="table">
                 <thead>
@@ -23,6 +22,7 @@
                     <th>Estado</th>
                     <th>Município</th>
                     <th>Candidatos</th>
+                    <th>Seções</th>
                     <th>Votos Válidos</th>
                     <th>Mat. Definido</th>
                     <th>Apuração</th>
@@ -35,6 +35,7 @@
                         <td>{{ municipio.UF }}</td>
                         <td>{{ municipio.nome }}</td>
                         <td>{{ municipio.candidatos|count }}</td>
+                        <td>{{ municipio.percentual_secoes_totalizadas}}%</td>
                         <td>{{ municipio.percentual_votos_validos}}%</td>
                         <td class="col-sm-2">
                             {% if municipio.matematicamente_definido == "s" %}

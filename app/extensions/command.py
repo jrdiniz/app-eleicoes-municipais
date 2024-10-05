@@ -273,4 +273,17 @@ def init_app(app):
             municipio.dt = datetime.now().date()
             db.session.commit()
             print(f"Valores variaveis zerados {municipio.nome}")
+            
+            
+    @app.cli.command()
+    def clean_candidatos_variables():
+        candidatos = db.session.query(Candidato).all()
+        for candidato in candidatos:
+            candidato.votos_apurados = str(0)
+            candidato.percentual_votos_apurados = str(0.0)
+            candidato.seq = str(0)
+            candidato.situacao = ''
+            candidato.destinacao_voto = ''
+            db.session.commit()
+            print(f"Valores variaveis zerados {candidato.nome}")
         
