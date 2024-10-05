@@ -41,10 +41,15 @@ def task_atualizar_apuracao(codigo_municipio):
         response = requests.get(url, params=params, headers=headers)
         if response.status_code == 200:
             apuracao = response.json()['0']
-            
-            municipio.ht = apuracao['ht'] or None
-            municipio.dt = datetime.datetime.strptime(apuracao['dt'], '%d/%m/%Y').date() or None
-            municipio.matematicamente_definido = apuracao['matematicamente_definido'] or None
+            try:
+                municipio.ht = apuracao['ht']
+                municipio.dt = datetime.datetime.strptime(apuracao['dt'], '%d/%m/%Y').date()
+            except Exception as e:
+                municipio.dt = datetime.datetime.now().date()
+                municipio.ht = datetime.datetime.now().time()   
+                print(f"Sem informação de atualização, setando data e hora atual: {e}")
+
+            municipio.matematicamente_definido = apuracao['matematicamente_definido']
             municipio.votos_validos = apuracao['votos_validos']
             municipio.percentual_votos_validos = apuracao['percentual_votos_validos']
             municipio.votos_branco = apuracao['votos_branco']

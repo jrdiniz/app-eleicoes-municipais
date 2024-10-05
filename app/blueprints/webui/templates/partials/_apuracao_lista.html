@@ -5,7 +5,7 @@
                 <th>#</th>
                 <th>Estado</th>
                 <th>Município</th>
-                <th>Candidatos</th>
+                <th>Última Atualização</th>
                 <th>Seções</th>
                 <th>Votos Válidos</th>
                 <th>Mat. Definido</th>
@@ -17,11 +17,11 @@
                 <tr>
                     <td>{{ loop.index }}</td>
                     <td>{{ municipio.UF }}</td>
-                    <td>{{ municipio.nome }}</td>
-                    <td>{{ municipio.candidatos|count }}</td>
+                    <td class="col-sm-3">{{ municipio.nome }}</td>
+                    <td class="col-sm-2">{{ municipio.dt.strftime('%d/%m/%Y')}} {{ municipio.ht.strftime('%H:%M') }}</td>
                     <td>{{ municipio.percentual_secoes_totalizadas}}%</td>
                     <td>{{ municipio.percentual_votos_validos}}%</td>
-                    <td class="col-sm-2">
+                    <td class="col-sm-1">
                         {% if municipio.matematicamente_definido == "s" %}
                         <span class="badge text-bg-success">Sim</span>
                         {% elif municipio.matematicamente_definido == "n" %}
@@ -29,7 +29,7 @@
                         {% else %}
                         <span class="badge text-bg-danger">N/A</span>
                         {% endif %}
-                    <td>
+                    <td class="col-sm-1">
                         {% if municipio.totalizacao_final == "n" %}
                             <span class="badge text-bg-primary">Em Andamento</span> 
                         {% elif municipio.totalizacao_final == "s" %}
@@ -38,7 +38,7 @@
                             <span class="badge text-bg-error">N/D</span> 
                         {% endif %}
                     </td>
-                    <td>
+                    <td class="col-sm-3">
                         <a href="{{ url_for('webui.terra_json', nome_normalizado=municipio.nome_normalizado)}}" class="btn btn-dark" target="_blank"><i class="bi bi-braces" aria-label="JSON"></i></a>
                         <a href="{{ url_for('webui.candidatos', codigo_municipio = municipio.codigo_municipio)}}" class="btn btn-primary"><i class="bi bi-person-bounding-box"></i></a>
                         <a href="{{ url_for('webui.criar_video', codigo_municipio = municipio.codigo_municipio)}}" class="btn btn-dark"><i class="bi bi-film"></i></a>

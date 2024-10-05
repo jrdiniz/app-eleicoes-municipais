@@ -1,0 +1,14 @@
+[Unit]
+Description=Videofeed Tasks - v0.1
+After=network.target
+
+[Service]
+User=eleicoes
+Group=webpoint
+WorkingDirectory={{ application_path }}/{{ application_user }}/public_html/
+ExecStart={{ application_path }}/{{ application_user }}/public_html/env/bin/celery -A tasks worker -B --loglevel INFO --logfile={{ application_path }}/{{ application_user }}/public_html/tasks.log
+Restart=always
+Type=simple
+
+[Install]
+WantedBy=multi-user.target

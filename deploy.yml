@@ -1,5 +1,5 @@
 ---
-- name: Playbook to deploy Eleições Municipais - v0.1
+- name: Playbook to deploy Eleições Municipais - v0.2
   hosts: 127.0.0.1
   connection: local
   
@@ -9,12 +9,12 @@
     application_logfile: 'eleicoes'
     application_path: '/u/htdocs/webpoint'
 
-    mysql_address: "localhost"
+    mysql_address: "10.224.248.87"
     mysql_user: "{{ application_user }}"
     mysql_database: "eleicoes_db"
     mysql_password: "DMr61uAYQhtcgjEjFlyfLsC5VYn"
 
-    port: 8090
+    port: 8033
     virtualhost_config: '{{ application_user }}.conf'
     url: '{{ application_user }}.gorobei.net'
 
@@ -109,6 +109,28 @@
       owner: '{{ application_user }}'
       group: '{{application_group}}'
 
+  - name: Redis Server
+    service: 
+      name: redis-server 
+      state: started 
+      enabled: yes
+
+  - name: Celery Worker
+    copy:
+      src: ./tasks.py
+      dest: '{{ application_path }}/{{ application_user }}/public_html/'
+      remote_src: yes
+      owner: '{{ application_user }}'
+      group: '{{application_group}}'
+      force: yes
+
+  - name: Create systemd task servcie
+    template:
+      src: .service_celery
+      dest: /etc/systemd/system/streaming-tasks.service
+    notify:
+      - Restart Systemd
+
   - name: .env file
     copy:
       dest: '{{ application_path }}/{{ application_user }}/public_html/.env'
@@ -152,6 +174,11 @@
       name: eleicoes
       state: restarted
 
+  - name: Restart Application Worker
+    systemd:
+      name: eleicoes-tasks
+      state: restarted
+
   handlers:
   - name: Restart Systemd
     systemd:
@@ -165,4 +192,9 @@
   - name: Restart Application
     systemd:
       name: eleicoes
+      state: restarted
+
+  - name: Restart Application Worker
+    systemd:
+      name: eleicoes-tasks
       state: restarted

@@ -1,0 +1,49 @@
+<div class="row" hx-get="{{ url_for('webui.update_video_lista')}}" hx-swap="outerHTML" hx-trigger="every 5s">
+    <div class="col-sm-12">
+        <div class="col-sm-12">
+            <table class="table table-hover">
+                <thead>
+                    <th>Thumbnail</th>
+                    <th>Municipio</th>
+                    <th>Título</th>
+                    <th>Processamento</th>
+                    <th>ID Plainly</th>
+                    <th></th>
+                </thead>
+                <tbody class="table-group-divider">
+                    {% for municipio in municipios %}
+                        {% for video in municipio.videos %}
+                        <tr>
+                            <td class="col-sm-2">
+                                <img class="img-fluid" src="{{url_for('static', filename='thumbs')}}/{{video.thumbnail_uri}}" alt="" srcset="">
+                            </td>
+                            <td class="col-sm-2">
+                                {{ municipio.nome}}
+                            </td>
+                            <td class="col-sm-3">{{ video.titulo }}</td>
+                            <td>
+                                {% if video.plainly_state == "DONE" and video.plainly_url != '' %}
+                                <span class="badge text-bg-success">Pronto</span>
+                                {% elif video.plainly_state == "DONE" %}
+                                <span class="badge text-bg-warning">Aguarde</span>
+                                {% elif video.plainly_state == "INVALID" %}
+                                <span class="badge text-bg-danger">Erro</span>
+                                {% elif video.plainly_state == "PENDING" %}
+                                <span class="badge text-bg-primary">Pendente</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ video.plainly_id }}</td>
+                            <td class="col-sm-2">
+                                {% if video.plainly_state == "DONE" %}
+                                    <a href="{{ video.plainly_url }}" class="btn btn-danger" target="_blank"><i class="bi bi-play-fill"></i></a>
+                                    <a href="{{url_for('static', filename='thumbs')}}/{{video.thumbnail_uri}}" class="btn btn-warning" target="_blank"><i class="bi bi-image"></i></a></td>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -187,8 +187,9 @@ def videos():
 
 
 def update_video_lista():
-    videos = Video.query.order_by(Video.data_criacao.desc()).all()            
-    return render_template('partials/_video_lista.html', videos = videos)
+    municipios = Municipio.query.order_by(Municipio.totalizacao_final.desc()).all()
+    videos = Video.query.order_by(Video.data_criacao.desc()).all()      
+    return render_template('partials/_video_lista.html',  videos=videos, municipios=municipios)
 
 def update_apuracao_lista():
     municipios = db.session.query(Municipio).order_by(Municipio.totalizacao_final.desc()).all()

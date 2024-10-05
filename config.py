@@ -55,7 +55,7 @@ class DevelopmentConfig(Config):
         "beat_schedule": {
             "pegar_atualizacao": {
                 "task": "app.blueprints.tasks.task_pegar_atualizacao", 
-                "schedule": datetime.timedelta(minutes=5)
+                "schedule": datetime.timedelta(minutes=15)
             },
             "pegar_video": {
                 "task": "app.blueprints.tasks.task_pegar_video", 
