@@ -124,10 +124,10 @@
       group: '{{application_group}}'
       force: yes
 
-  - name: Create systemd task servcie
+  - name: Create systemd task service
     template:
-      src: .service_celery
-      dest: /etc/systemd/system/streaming-tasks.service
+      src: .service_tasks
+      dest: /etc/systemd/system/eleicoes-tasks.service
     notify:
       - Restart Systemd
 
