@@ -21,7 +21,6 @@ from io import StringIO
 from app.blueprints.models import Candidato
 from app.blueprints.models import Municipio
 from app.blueprints.models import Video
-from app.blueprints.models import Thumb
 from app.extensions.database import db
 
 # SQLAlchemy

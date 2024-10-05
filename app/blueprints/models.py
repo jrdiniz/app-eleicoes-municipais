@@ -63,25 +63,7 @@ class Video(db.Model):
     plainly_state = db.Column(db.String(25), nullable=True)
     plainly_template_name = db.Column(db.String(255), nullable=True)
     plainly_template_id = db.Column(db.String(255), nullable=True)
-    plainly_thumbnail_uri = db.Column(db.Text, nullable=True)
-    plainly_thumbnail_id = db.Column(db.Text, nullable=True)
-    plainly_thumbnail_state = db.Column(db.String(25), nullable=True)
     
     # Foreign key to Municipio
     codigo_municipio = db.Column(db.String(10), db.ForeignKey('municipios.codigo_municipio'), nullable=False)
     
-    
-        
-class Thumb(db.Model):
-    __tablename__ = "thumb"
-    id = db.Column(db.String(36), primary_key=True, nullable=False, unique=True, index=True, default=lambda: str(uuid.uuid4().hex))
-    plainly_thumbnail_uri = db.Column(db.Text, nullable=False)
-    plainly_id = db.Column(db.String(36), nullable=True)
-    plainly_state = db.Column(db.String(25), nullable=True)
-    municipio_id = db.Column(db.String(35), nullable=False, index=True)
-    
-    def __init__(self, plainly_thumbnail_uri, plainly_id, plainly_state, municipio_id):
-        self.plainly_thumbnail_uri = plainly_thumbnail_uri
-        self.plainly_id = plainly_id
-        self.plainly_state = plainly_state
-        self.municipio_id = municipio_id

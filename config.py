@@ -6,6 +6,7 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 class Config(object):
     # Default
     SECRET_KEY = os.getenv('SECRET_KEY')
+    BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 
 class ProductionConfig(Config):
     # Debug
@@ -25,6 +26,10 @@ class ProductionConfig(Config):
         'task_ignore_result': True,
         'broker_connection_retry_on_startup': True,
         "beat_schedule": {
+            "pegar_atualizacao": {
+                "task": "app.blueprints.tasks.task_pegar_atualizacao", 
+                "schedule": datetime.timedelta(minutes=15)
+            },
             "pegar_video": {
                 "task": "app.blueprints.tasks.task_pegar_video", 
                 "schedule": datetime.timedelta(minutes=1)
@@ -35,6 +40,7 @@ class ProductionConfig(Config):
             },
         }
     }
+    
 class DevelopmentConfig(Config):
     # Debug
     DEBUG = True

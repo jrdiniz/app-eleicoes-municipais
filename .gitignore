@@ -279,4 +279,5 @@ dist
 .svelte-kit
 
 app/static/videos/*
+app/static/fotos/*
 fotos/*

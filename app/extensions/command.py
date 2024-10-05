@@ -9,9 +9,13 @@ from datetime import datetime
 
 import pandas as pd
 
+# Flask
+from flask import current_app
+
 from app.extensions.database import db
 from app.blueprints.models import Candidato
 from app.blueprints.models import Municipio
+from app.blueprints.models import Video
 
 from datetime import datetime
 
@@ -20,7 +24,26 @@ from sqlalchemy.exc import IntegrityError
 
 def init_app(app):
     @app.cli.command()
-    def update_municipios():
+    def importar_dados_iniciais():
+        """ Limpandos as tabelas"""
+        municipios = Municipio.query.all()
+        for municipio in municipios:
+            for candidato in municipio.candidatos:
+                print(f"Removendo candidato {candidato.nome}")
+                db.session.delete(candidato)
+                db.session.commit()
+            
+            for video in municipio.videos:
+                print(f"Removendo videos")
+                db.session.delete(video)
+                db.session.commit()
+                
+            print(f"Removendo municipio {municipio.nome}")
+            db.session.delete(municipio)
+            db.session.commit()
+        db.session.commit()
+
+        
         municipios = [
             {'nome': 'Rio Branco', 'uf': 'AC'},
             {'nome': 'Maceió', 'uf': 'AL'},
@@ -125,11 +148,12 @@ def init_app(app):
             {'nome': 'Taubaté', 'uf': 'SP'},
             {'nome': 'Palmas', 'uf': 'TO'}
         ]
+        
         url = "https://p1-cloud.trrsf.com/api/eleicoes2024-api/resultados"
         for municipio in municipios:
+            
             normalize = unidecode.unidecode(municipio['nome'])
             municipio['nome_normalizado'] = normalize.upper()
-            
             
             # Request API 
             params = {
@@ -139,15 +163,15 @@ def init_app(app):
             
             if response.status_code == 200:
                 data = response.json()['0']
-                result = Municipio.query.filter_by(codigo_municipio=data['codigo_municipio']).first()   
+                result = Municipio.query.filter_by(codigo_municipio=data['codigo_municipio']).one_or_none()   
                 if result is None:
                     apuracao = response.json()['0']
                     try:
                         apuracao_data = apuracao['ht']
-                        apuracao_time = datetime.datetime.strptime(apuracao['dt'], '%d/%m/%Y').date()
+                        apuracao_time = datetime.strptime(apuracao['dt'], '%d/%m/%Y').date()
                     except Exception as e:
-                        apuracao_data = datetime.datetime.now().date()
-                        apuracao_time = datetime.datetime.now().time()   
+                        apuracao_data = datetime.now().date()
+                        apuracao_time = datetime.now().time()   
                     
                     new_municipio = Municipio(
                         codigo_municipio=data['codigo_municipio'],
@@ -170,17 +194,25 @@ def init_app(app):
                         percentual_abstencao=data['percentual_abstencao'],
                     )        
                     db.session.add(new_municipio)
+                    db.session.commit()
+                    print(f"Adicionando municipio {municipio['nome']}")
+                    
+                    # Add Video and Thumbnail
+                    video = Video(
+                        video_id=data['codigo_municipio'],
+                        thumbnail_uri=f"{data['codigo_municipio']}.png",
+                        codigo_municipio=data['codigo_municipio']
+                    )
+                    db.session.add(video)
+                    db.session.commit()
+                    
                     for candidato_data in data['candidatos']:
+                        # Download foto candidato
+                        response = requests.get(f"https://{candidato_data['foto']}")
+                        with open(f"{current_app.config['BASE_DIR']}/app/static/fotos/{candidato_data['sqcand']}.jpg", 'wb') as ft:
+                            ft.write(response.content)
+                            ft.close()
                         
-                        # check if foto exist in static/fotos
-                        candidato_foto = ""
-                        if os.path.exists(f"static/fotos/{result.UF}{candidato_data['sqcand']}_div.jpg"):
-                            candidato_foto = f"{result.UF}{candidato_data['sqcand']}_div.jpg"
-                        elif os.path.exists(f"static/fotos/{result.UF}{candidato_data['sqcand']}_div.jpeg"):
-                            candidato_foto = f"{result.UF}{candidato_data['sqcand']}_div.jpeg"
-                        else:
-                            print(f"Foto não encontrada {result.UF}{candidato_data['sqcand']}")
-                            
                         candidato = Candidato(
                             nro=candidato_data['nro'],
                             seq=candidato_data['seq'],
@@ -189,7 +221,7 @@ def init_app(app):
                             destinacao_voto=candidato_data['destinacao_voto'],
                             nome_urna=candidato_data['nome_urna'],
                             nome=candidato_data['nome'],
-                            foto=candidato_foto,
+                            foto=f"{candidato_data['sqcand']}.jpg",
                             partido=candidato_data['partido'],
                             votos_apurados=candidato_data['votos_apurados'],
                             percentual_votos_apurados=candidato_data['percentual_votos_apurados'],
@@ -197,34 +229,8 @@ def init_app(app):
                         )
                         # Add each Candidato to the session
                         db.session.add(candidato)
-                else:
-                    result.nome = data['nome']
-                    result.nome_normalizado = data['nome_normalizado']
-                    result.UF = data['UF']
-                    result.matematicamente_definido = data['matematicamente_definido']
-                    result.totalizacao_final = data['totalizacao_final']
-                    result.total_votos = data['total_votos']
-                    result.votos_validos = data['votos_validos']
-                    result.percentual_votos_validos = data['percentual_votos_validos']
-                    result.percentual_secoes_totalizadas = data['percentual_secoes_totalizadas']
-                    result.votos_branco = data['votos_branco']
-                    result.percentual_votos_branco = data['percentual_votos_branco']
-                    result.votos_nulo = data['votos_nulo']
-                    result.percentual_votos_nulo = data['percentual_votos_nulo']
-                    result.abstencao = data['abstencao']
-                    result.percentual_abstencao = data['percentual_abstencao']
-                    
-                    for candidato in result.candidatos:
-                        # check if foto exist in static/fotos
-                        candidato_foto = ""
-                        if os.path.exists(f"static/fotos/{result.UF}{candidato.sqcand}_div.jpg"):
-                            candidato_foto = f"{result.UF}{candidato.sqcand}_div.jpg"
-                        elif os.path.exists(f"static/fotos/{result.UF}{candidato.sqcand}_div.jpeg"):
-                            candidato_foto = f"{result.UF}{candidato.sqcand}_div.jpeg"
-                        else:
-                            print(f"Foto não encontrada {result.UF}{candidato.sqcand}_div")
-                        candidato.foto = candidato_foto
-                db.session.commit()
+                        db.session.commit()
+                        print(f"Adicionando candidato {candidato.nome}")
             else:
                 print(f"Error: {response.status_code} - {response.text}")
                 
