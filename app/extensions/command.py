@@ -171,6 +171,14 @@ def init_app(app):
                     )        
                     db.session.add(new_municipio)
                     for candidato_data in data['candidatos']:
+                        
+                        # check if foto exist in static/fotos
+                        candidato_foto = ""
+                        if os.path.exists(f"static/fotos/{municipio.UF}{candidato_data['sqcand']}_div.jpg"):
+                            candidato_foto = "{municipio.UF}{candidato_data['sqcand']}_div.jpg"
+                        elif os.path.exists(f"static/fotos/{municipio.UF}{candidato_data['sqcand']}_div.jpeg")
+                            candidato_foto = "{municipio.UF}{candidato_data['sqcand']}_div.jpg"
+                            
                         candidato = Candidato(
                             nro=candidato_data['nro'],
                             seq=candidato_data['seq'],
@@ -179,7 +187,7 @@ def init_app(app):
                             destinacao_voto=candidato_data['destinacao_voto'],
                             nome_urna=candidato_data['nome_urna'],
                             nome=candidato_data['nome'],
-                            foto=candidato_data['foto'],
+                            foto=candidato_foto,
                             partido=candidato_data['partido'],
                             votos_apurados=candidato_data['votos_apurados'],
                             percentual_votos_apurados=candidato_data['percentual_votos_apurados'],
