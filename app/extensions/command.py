@@ -141,13 +141,21 @@ def init_app(app):
                 data = response.json()['0']
                 result = Municipio.query.filter_by(codigo_municipio=data['codigo_municipio']).first()   
                 if result is None:
+                    apuracao = response.json()['0']
+                    try:
+                        apuracao_data = apuracao['ht']
+                        apuracao_time = datetime.datetime.strptime(apuracao['dt'], '%d/%m/%Y').date()
+                    except Exception as e:
+                        apuracao_data = datetime.datetime.now().date()
+                        apuracao_time = datetime.datetime.now().time()   
+                    
                     new_municipio = Municipio(
                         codigo_municipio=data['codigo_municipio'],
                         nome=data['nome'], 
                         nome_normalizado=data['nome_normalizado'],
                         UF=data['UF'],
-                        dt=datetime.strptime(data['dt'], '%d/%m/%Y').date(),
-                        ht=data['ht'],
+                        dt=apuracao_data,
+                        ht=apuracao_time,
                         matematicamente_definido=data['matematicamente_definido'],
                         totalizacao_final=data['totalizacao_final'],
                         total_votos=data['total_votos'],
