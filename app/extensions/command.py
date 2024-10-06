@@ -146,7 +146,8 @@ def init_app(app):
             {'nome': 'Suzano', 'uf': 'SP'},
             {'nome': 'Taboão da Serra', 'uf': 'SP'},
             {'nome': 'Taubaté', 'uf': 'SP'},
-            {'nome': 'Palmas', 'uf': 'TO'}
+            {'nome': 'Palmas', 'uf': 'TO'},
+            {'nome': 'Parauapebas ', 'uf': 'PA'}
         ]
         
         url = "https://p1-cloud.trrsf.com/api/eleicoes2024-api/resultados"
@@ -167,8 +168,8 @@ def init_app(app):
                 if result is None:
                     apuracao = response.json()['0']
                     try:
-                        apuracao_data = apuracao['ht']
-                        apuracao_time = datetime.strptime(apuracao['dt'], '%d/%m/%Y').date()
+                        apuracao_data = datetime.strptime(apuracao['dt'], '%d/%m/%Y').date()
+                        apuracao_time = apuracao['ht']
                     except Exception as e:
                         apuracao_data = datetime.now().date()
                         apuracao_time = datetime.now().time()   

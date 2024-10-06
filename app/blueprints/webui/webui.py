@@ -128,8 +128,8 @@ def criar_video(codigo_municipio):
 def pegar_template(nm_candidatos):
     templates = [
         {
-            'projectId': 'bd7ffc02-8f57-4795-be33-ec64b6b2ef09',
-            'templateId': 'c0250f96-42e4-4c09-80ab-ce32e75254d9',
+            'projectId': 'cf6486cb-10ad-4dd9-ab91-2bc9a46ecf8a',
+            'templateId': 'dc58120b-4350-44ea-ad65-0044e5bd086d',
             'nm_candidados': 3
         },
         {
