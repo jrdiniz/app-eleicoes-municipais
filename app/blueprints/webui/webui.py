@@ -80,7 +80,7 @@ def criar_video(codigo_municipio):
     
     # Brancos e Nulos Total
     votos_nulos_brancos = Decimal(municipio.votos_branco) + Decimal(municipio.votos_nulo)
-    parameters[f"brancosNulosTotal"] = f"{votos_nulos_brancos}"
+    parameters[f"brancosNulosTotal"] = f"{votos_nulos_brancos} votos"
     
     # Votos Válidos
     parameters[f"votosValidos"] = f"Votos válidos {municipio.votos_validos} ({municipio.percentual_votos_validos}%), fonte TSE"
@@ -133,38 +133,38 @@ def pegar_template(nm_candidatos):
             'nm_candidados': 3
         },
         {
-            'projectId': 'a66e8c0c-89c8-4440-8c24-cdf60d10f5bc',
-            'templateId': '30e42b94-70ee-4e89-be42-5e52289a7103',
+            'projectId': '8d34e66a-5fcd-4dc1-a1fa-7237dacf6bbb',
+            'templateId': 'c4dad6a1-93d6-48fe-b0c6-859dd5401f60',
             'nm_candidados': 4
         },
         {
-            'projectId': 'edf83540-bb85-4b59-8b87-de84dd166275',
-            'templateId': '175d6370-8bb6-402d-bb30-b1596cf289a7',
+            'projectId': '18ab9ede-3dc9-413b-8c6d-bf13f723b59d',
+            'templateId': '90e76cbf-9f13-41a2-8ac4-46c82f09dd75',
             'nm_candidados': 5
         },
         {
-            'projectId': '02fed3ad-64dd-40e1-8e8e-9c95dd82a162',
-            'templateId': '03356aa3-4311-4add-a61a-481ac988a3cf',
+            'projectId': '0de0f2d5-12ae-48f7-b6ec-4d7bd525bce9',
+            'templateId': '35993f2f-f8b2-4daf-afa2-50accb7fe99b',
             'nm_candidados': 6
         },
         {
-            'projectId': '3bcdfcf5-d1c4-4a57-bf14-28b87570e2a8',
-            'templateId': '0cb1f2ec-bc6f-49a4-adb7-d6454f7ca9ac',
+            'projectId': '113aa2f8-6773-4715-a769-a842bc822dc6',
+            'templateId': '78006836-6600-4d2b-b056-83cdf90f10e1',
             'nm_candidados': 7
         },
         {
-            'projectId': '0009aa7c-d31f-4b07-aaf7-1a3a82372c91',
-            'templateId': '352f14a6-6aef-4cbe-aa5d-e57564aa73ea',
+            'projectId': '67a12862-854f-46a1-8acb-d374b22ec64a',
+            'templateId': '832ed4ec-dde5-4fbc-84ec-a0a0d16d3816',
             'nm_candidados': 8
         },
         {
-            'projectId': 'ddd74c5a-7f96-47e8-a12f-b79f3871f1ec',
-            'templateId': 'b397a545-0fe9-4b15-b37a-18df2c538b83',
+            'projectId': '8decd7f3-0829-4e7b-8235-28efb059037e',
+            'templateId': '2dfb8513-76ad-4864-b4e8-da0a20af47be',
             'nm_candidados': 9
         },
         {
-            'projectId': '79efcf99-b957-4acd-8625-4ec29137bc75',
-            'templateId': 'f89e0126-fbda-477e-bbf3-2557cc2c8cea',
+            'projectId': 'd4d799dc-cec0-4658-850a-0d00e5f9d5f9',
+            'templateId': '63e4b4ab-418e-404e-aa91-08dd0d1ef4de',
             'nm_candidados': 10
         }
     ]
@@ -293,46 +293,6 @@ def vmix():
             data.append(item)
     
     return jsonify(data)
-
-
-def gerar_todos_os_thumbs():
-    municipios = Municipio.query.all()
-    
-    # for municipio in municipios:
-    #     video = Video.query.filter_by(codigo_municipio=municipio.codigo_municipio).one_or_none()
-    #     if video is None:
-        
-    #         parameters = {}
-    #         parameters["cidade"] = municipio.nome.upper()
-            
-    #         endpoint = "https://api.plainlyvideos.com/api/v2/renders"
-    #         headers = {
-    #             "Content-Type": "application/json"
-    #         }
-    #         data = {
-    #             "projectId": f"6ce3a7bf-6b1e-4713-9a1f-2eb69b5cc52a",
-    #             "templateId":  f"0fc45e21-603a-487e-a290-bec2ececafbe",
-    #             "parameters": parameters,
-    #         }
-    #         auth = HTTPBasicAuth(current_app.config["PLAINLY_API_KEY"], '')
-            
-    #         response = requests.post(
-    #             endpoint, 
-    #             headers=headers, 
-    #             json=data, 
-    #             auth=auth
-    #         )
-    #         video = Video(
-    #             codigo_municipio=municipio.codigo_municipio,
-    #             plainly_thumbnail_id=response.json()['id'],
-    #             plainly_thumbnail_state=response.json()['state'],
-    #         )
-    #         db.session.add(video)
-    #         db.session.commit()
-    #         print(video.plainly_thumbnail_id, video.plainly_thumbnail_state)
-    #         time.sleep(5)
-            
-    return redirect(url_for('webui.videos'))
 
 def terra_json(nome_normalizado):
     url = "https://p1-cloud.trrsf.com/api/eleicoes2024-api/resultados"

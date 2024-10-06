@@ -9,7 +9,6 @@ from .webui import update_video_lista
 from .webui import update_apuracao_lista
 from .webui import delete_video
 from .webui import criar_feed
-from .webui import gerar_todos_os_thumbs
 from .webui import terra_json
 from .webui import yt_copy
 from .webui import atualizar_apuracao
@@ -39,9 +38,6 @@ bp.add_url_rule("/video/delete/<video_id>", view_func=delete_video)
 
 criar_feed.methods = ["GET"]
 bp.add_url_rule("/feed", view_func=criar_feed)
-
-gerar_todos_os_thumbs.methods = ["GET"]
-bp.add_url_rule("/thumbs", view_func=gerar_todos_os_thumbs)
 
 terra_json.methods = ["GET"]
 bp.add_url_rule("/terra/<nome_normalizado>", view_func=terra_json)
