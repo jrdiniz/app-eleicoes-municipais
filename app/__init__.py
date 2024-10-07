@@ -4,7 +4,9 @@ from flask import Flask
 # Extensions
 from app.extensions import configuration
 from app.extensions import database
+from app.extensions import authentication
 from app.extensions import command
+from app.extensions import encrypt
 
 # Blueprints
 from app.blueprints import webui
@@ -19,6 +21,8 @@ def create_app() -> Flask:
     # Initialize Extensions
     configuration.init_app(app)
     database.init_app(app)
+    authentication.init_app(app)
+    encrypt.init_app(app)
     command.init_app(app)
     
     # Initialize Celery

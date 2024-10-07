@@ -14,6 +14,7 @@ from flask import url_for
 from flask import render_template
 from flask import current_app
 from flask import jsonify
+from flask import flash
 from flask import send_file
 from flask import abort
 from io import StringIO
@@ -21,7 +22,17 @@ from io import StringIO
 from app.blueprints.models import Candidato
 from app.blueprints.models import Municipio
 from app.blueprints.models import Video
+from app.blueprints.models import User
 from app.extensions.database import db
+
+# Authentication
+from app.extensions.authentication import login_manager
+from app.extensions.authentication import login_user
+from app.extensions.authentication import login_required
+from app.extensions.authentication import logout_user
+
+# Encrypt
+from app.extensions.encrypt import bcrypt
 
 # SQLAlchemy
 from sqlalchemy import func
@@ -31,16 +42,41 @@ import xml.etree.ElementTree as ET
 import os
 import os
 
+
+@login_manager.user_loader
+def load_user(id):
+    return User.query.get(id)
+
+
+@login_required
 def index():
     municipios = db.session.query(Municipio).order_by(Municipio.totalizacao_final.desc()).all()
     return render_template("index.html", municipios=municipios)
 
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        user = User.query.filter_by(username=username).first()
+        if user and bcrypt.check_password_hash(user.password, password):
+            login_user(user, remember=True)
+            return redirect(url_for('webui.index'))
+        else:
+            flash("Usuário e/ou Senha Inválidos.", "alert-danger")
+    return render_template("login.html")
+
+def logout():
+    logout_user()
+    return redirect(url_for("webui.login"))
+
+@login_required
 def candidatos(codigo_municipio):
     municipio = Municipio.query.filter_by(codigo_municipio=codigo_municipio).first_or_404()   
     candidatos = Candidato.query.filter(Candidato.codigo_municipio == codigo_municipio).order_by(Candidato.percentual_votos_apurados.desc()).all()
     candidatos = ordenar_candidatos(candidatos)
     return render_template("candidatos.html", candidatos=candidatos, municipio=municipio)
 
+@login_required
 def criar_video(codigo_municipio):
     municipio = Municipio.query.filter_by(codigo_municipio=codigo_municipio).first_or_404()
     candidatos = Candidato.query.filter(Candidato.codigo_municipio == codigo_municipio).order_by(Candidato.votos_apurados).all()
@@ -129,7 +165,6 @@ def criar_video(codigo_municipio):
     db.session.commit()
     return redirect(url_for('webui.videos'))    
 
-
 def pegar_template(nm_candidatos):
     templates = [
         {
@@ -183,22 +218,25 @@ def quebrar_linha(nome_candidato):
         primeiro_escapo = nome_candidato.split(' ', 1)
         return primeiro_escapo[0] + '\n' + primeiro_escapo[1]
     return nome_candidato
-    
+
+@login_required
 def videos():
     municipios = Municipio.query.order_by(Municipio.totalizacao_final.desc()).all()
     videos = Video.query.order_by(Video.data_criacao.desc()).all()
     return render_template('videos.html', videos=videos, municipios=municipios)
 
-
+@login_required
 def update_video_lista():
     municipios = Municipio.query.order_by(Municipio.totalizacao_final.desc()).all()
     videos = Video.query.order_by(Video.data_criacao.desc()).all()      
     return render_template('partials/_video_lista.html',  videos=videos, municipios=municipios)
 
+@login_required
 def update_apuracao_lista():
     municipios = db.session.query(Municipio).order_by(Municipio.totalizacao_final.desc()).all()
     return render_template('partials/_apuracao_lista.html', municipios=municipios)
 
+@login_required
 def delete_video(video_id):
     video = Video.query.get(video_id)
     db.session.delete(video)
@@ -299,6 +337,7 @@ def vmix():
     
     return jsonify(data)
 
+@login_required
 def terra_json(nome_normalizado):
     url = "https://p1-cloud.trrsf.com/api/eleicoes2024-api/resultados"
     params = {
@@ -310,6 +349,7 @@ def terra_json(nome_normalizado):
     response = requests.get(url, params=params, headers=headers)
     return jsonify(response.json())
 
+@login_required
 def atualizar_apuracao():
     municipios = Municipio.query.all()
     url = "https://p1-cloud.trrsf.com/api/eleicoes2024-api/resultados"
@@ -359,6 +399,7 @@ def atualizar_apuracao():
                     print(cand)            
     return redirect(url_for('webui.index'))
 
+@login_required
 def atualizar_video_status():
     videos = Video.query.filter_by(Video.plainly_state != "DONE", Video.plainly_state != "INVALID").all()
     endpoint = "https://api.plainlyvideos.com/api/v2/renders"
@@ -389,7 +430,7 @@ def atualizar_video_status():
 
         return redirect(url_for('webui.videos'))
 
-
+@login_required
 def yt_copy(codigo_municipio):
     municipio = Municipio.query.filter_by(codigo_municipio=codigo_municipio).one_or_none()
     candidatos = candidatos = Candidato.query.filter(Candidato.codigo_municipio == municipio.codigo_municipio).order_by(Candidato.votos_apurados).all()
@@ -408,6 +449,7 @@ def yt_copy(codigo_municipio):
     
     yt_copy = gerar_yt_copy(municipio, candidatos, segundo_turno)
     return render_template('copy.html', yt_copy=yt_copy, municipio = municipio)
+
 
 def gerar_yt_copy(municipio, candidatos, segundo_turno=True):
     

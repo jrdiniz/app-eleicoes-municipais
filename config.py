@@ -20,6 +20,13 @@ class ProductionConfig(Config):
 
     PLAINLY_API_KEY = '3ERTGr2Ze7H9AzDVrNqPkBM4aLR69zzT'
     
+    # Flask-Login
+    REMEMBER_COOKIE_DURATION = datetime.timedelta(minutes=120)
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SECURE = True
+    REMEMBER_COOKIE_SAMESITE = "Lax"
+    REMEMBER_COOKIE_REFRESH_EACH_REQUEST = False
+    
     CELERY = {
         'broker_url': 'redis://localhost:6379/0',
         'result_backend': 'redis://localhost:6379/0',
@@ -52,6 +59,14 @@ class DevelopmentConfig(Config):
     SQLALCHEMY_ENGINE_OPTIONS = {'pool_size': 20,'max_overflow':0, 'pool_recycle': 200, 'pool_pre_ping': True}
     
     PLAINLY_API_KEY = '3ERTGr2Ze7H9AzDVrNqPkBM4aLR69zzT'
+    
+    # Flask-Login
+    REMEMBER_COOKIE_DURATION = datetime.timedelta(minutes=120)
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SECURE = True
+    REMEMBER_COOKIE_SAMESITE = "Lax"
+    REMEMBER_COOKIE_REFRESH_EACH_REQUEST = False
+    
     
     CELERY = {
         'broker_url': 'redis://localhost:6379/0',

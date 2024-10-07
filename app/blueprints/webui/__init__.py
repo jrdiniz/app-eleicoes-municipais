@@ -2,6 +2,8 @@ from flask import Blueprint
 
 # Import routes
 from .webui import index
+from .webui import login
+from .webui import logout
 from .webui import candidatos
 from .webui import videos
 from .webui import criar_video
@@ -20,6 +22,12 @@ bp = Blueprint("webui", __name__, template_folder="templates", static_folder="st
 # Index route
 index.methods = ["GET"]
 bp.add_url_rule("/", view_func=index)
+
+login.methods = ["GET","POST"]
+bp.add_url_rule("/login", view_func=login)
+
+logout.methods = ["GET"]
+bp.add_url_rule("/logout", view_func=logout)
 
 # Candidatos route
 candidatos.methods = ["GET"]

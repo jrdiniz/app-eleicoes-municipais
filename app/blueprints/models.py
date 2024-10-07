@@ -1,7 +1,22 @@
 import uuid
 import datetime
 from app.extensions.database import db
+from app.extensions.authentication import UserMixin
 
+
+class User(UserMixin, db.Model):
+    __tablename__ = "user"
+    __table_args__ = {"extend_existing": True}
+    id = db.Column(
+        db.String(36),
+        primary_key=True,
+        nullable=False,
+        unique=True,
+        default=lambda: str(uuid.uuid4().hex),
+    )
+    username = db.Column("username", db.String(255), nullable=False, unique=True)
+    password = db.Column("password", db.String(255), nullable=False)
+    last_login = db.Column("last_login", db.DateTime, nullable=True)
 
 class Municipio(db.Model):
     __tablename__ = 'municipios'

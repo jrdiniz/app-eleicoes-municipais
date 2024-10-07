@@ -16,8 +16,11 @@ from app.extensions.database import db
 from app.blueprints.models import Candidato
 from app.blueprints.models import Municipio
 from app.blueprints.models import Video
+from app.blueprints.models import User
 
 from datetime import datetime
+
+from app.extensions.encrypt import bcrypt
 
 # SQLAlchemy
 from sqlalchemy.exc import IntegrityError
@@ -320,4 +323,15 @@ def init_app(app):
             candidato.destinacao_voto = ''
             db.session.commit()
             print(f"Valores variaveis zerados {candidato.nome}")
+    
+    @app.cli.command()
+    def criar_usuario():
+        # adicionar usuário na tabelas User
+        user = User(
+            username='video.br@telefonica.com',
+            password=bcrypt.generate_password_hash('1q2w#9o0p'),
+            last_login=datetime.now()	
+        )
+        db.session.add(user)
+        db.session.commit()
         
