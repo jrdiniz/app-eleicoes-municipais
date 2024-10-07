@@ -83,7 +83,8 @@ def task_atualizar_video_state():
     auth = HTTPBasicAuth(current_app.config["PLAINLY_API_KEY"], '')
     videos = Video.query.filter(
         (Video.plainly_state != 'DONE') & 
-        (Video.plainly_state != 'INVALID')).all()
+        (Video.plainly_state != 'INVALID') &
+        (Video.plainly_state != 'FAILED')).all()
     
     for video in videos:
         response = requests.get(
