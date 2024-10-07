@@ -35,15 +35,13 @@ class ProductionConfig(Config):
         "beat_schedule": {
             "pegar_atualizacao": {
                 "task": "app.blueprints.tasks.task_pegar_atualizacao", 
-                "schedule": datetime.timedelta(minutes=15)
-            },
-            "pegar_video": {
-                "task": "app.blueprints.tasks.task_pegar_video", 
-                "schedule": datetime.timedelta(minutes=1)
+                "schedule": datetime.timedelta(minutes=10),
+                "options":{'queue': 'eleicoes_queue'}
             },
             "atualizar_video_state": {
                 "task": "app.blueprints.tasks.task_atualizar_video_state", 
-                "schedule": datetime.timedelta(minutes=1)
+                "schedule": datetime.timedelta(minutes=1),
+                "options":{'queue': 'eleicoes_queue'}
             },
         }
     }
