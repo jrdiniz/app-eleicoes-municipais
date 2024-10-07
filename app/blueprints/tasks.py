@@ -102,6 +102,6 @@ def task_atualizar_video_state():
                     db.session.commit()
                     f.close()
             db.session.commit()
-            return f"Status do vídeo {video.titulo}, planily_id {video.plainly_id} alterado para {video.plainly_state}"
-        time.sleep(3)
-
+            #return f"Status do vídeo {video.titulo}, planily_id {video.plainly_id} alterado para {video.plainly_state}"
+        time.sleep(3) 
+    return f"Status dos vídeos atualizados em {datetime.datetime.now()}"
