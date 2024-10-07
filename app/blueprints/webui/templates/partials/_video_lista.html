@@ -27,7 +27,9 @@
                                 {% elif video.plainly_state == "IN_PROGRESS" %}
                                 <span class="badge text-bg-warning">Aguarde</span>
                                 {% elif video.plainly_state == "INVALID" %}
-                                <span class="badge text-bg-danger">Erro</span>
+                                <span class="badge text-bg-dark">Inválido</span>
+                                {% elif video.plainly_state == "FAILED" %}
+                                <span class="badge text-bg-danger">Falha</span>
                                 {% elif video.plainly_state == "PENDING" %}
                                 <span class="badge text-bg-primary">Pendente</span>
                                 {% endif %}
