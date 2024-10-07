@@ -5,6 +5,7 @@
                 <th>#</th>
                 <th>Estado</th>
                 <th>Município</th>
+                <th>Candidatos</th>
                 <th>Última Atualização</th>
                 <th>Seções</th>
                 <th>Votos Válidos</th>
@@ -18,6 +19,7 @@
                     <td>{{ loop.index }}</td>
                     <td>{{ municipio.UF }}</td>
                     <td class="col-sm-3">{{ municipio.nome }}</td>
+                    <td class="col-sm-1">{{ municipio.candidatos|length }}</td>
                     <td class="col-sm-2">{{ municipio.dt.strftime('%d/%m/%Y')}} {{ municipio.ht.strftime('%H:%M') }}</td>
                     <td>{{ municipio.percentual_secoes_totalizadas}}%</td>
                     <td>{{ municipio.percentual_votos_validos}}%</td>

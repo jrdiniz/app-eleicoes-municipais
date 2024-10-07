@@ -37,7 +37,8 @@ def index():
 
 def candidatos(codigo_municipio):
     municipio = Municipio.query.filter_by(codigo_municipio=codigo_municipio).first_or_404()   
-    candidatos = Candidato.query.filter(Candidato.codigo_municipio == codigo_municipio).all()
+    candidatos = Candidato.query.filter(Candidato.codigo_municipio == codigo_municipio).order_by(Candidato.percentual_votos_apurados.desc()).all()
+    candidatos = ordenar_candidatos(candidatos)
     return render_template("candidatos.html", candidatos=candidatos, municipio=municipio)
 
 def criar_video(codigo_municipio):
@@ -53,23 +54,28 @@ def criar_video(codigo_municipio):
     
     parameters[f"cidade2"] = f"{municipio.nome} - {municipio.UF}"
     
-    for i, candidato in enumerate(candidatos, start=1):
-        parameters[f"candidato{i}Nome"] = quebrar_linha(candidato.nome_urna)
-        parameters[f"candidato{i}Partido"] = candidato.partido
-        parameters[f"candidato{i}Percentual"] = f"{candidato.percentual_votos_apurados} %"
-        parameters[f"candidato{i}Votos"] = f"{candidato.votos_apurados} votos"
-        parameters[f"candidato{i}Foto"] = f"https://eleicoes.gorobei.net/static/fotos/{candidato.foto}"
+    candidatos = ordenar_candidatos(candidatos)
     
     for i, candidato in enumerate(candidatos, start=1):
-        if Decimal(candidato.votos_apurados) >= ((Decimal(municipio.votos_validos) / 2) + 1):
-            parameters[f"turnoResultado"] = "Não haverá segundo turno"
+        parameters[f"candidato{i}Nome"] = quebrar_linha(candidato['nome_urna'])
+        parameters[f"candidato{i}Partido"] = candidato['partido'] 
+        parameters[f"candidato{i}Percentual"] = f"{candidato['percentual_votos_apurados']} %"
+        parameters[f"candidato{i}Votos"] = f"{candidato['votos_apurados']} votos"
+        parameters[f"candidato{i}Foto"] = f"https://eleicoes.gorobei.net/static/fotos/{candidato['foto']}"
+        
+    for i, candidato in enumerate(candidatos, start=1):
+        if candidato['situacao'] == "Eleito":
             parameters[f"indicadorEleito"] = "100"
+            parameters[f"indicador2Turno"] = "0"
+            parameters[f"turnoResultado"] = "Não haverá segundo turno"
             segundo_turno = False
             break
         else:
-            parameters[f"turnoResultado"] = "Haverá segundo turno"
+            parameters[f"indicadorEleito"] = "0"
             parameters[f"indicador2Turno"] = "100"
+            parameters[f"turnoResultado"] = "Haverá segundo turno"
             segundo_turno = True
+            break
     
     # Abstenções
     parameters[f"abstencaoPercentual"] = f"{municipio.percentual_abstencao} %"
@@ -389,14 +395,17 @@ def yt_copy(codigo_municipio):
     municipio = Municipio.query.filter_by(codigo_municipio=codigo_municipio).one_or_none()
     candidatos = candidatos = Candidato.query.filter(Candidato.codigo_municipio == municipio.codigo_municipio).order_by(Candidato.votos_apurados).all()
     
+    candidatos = ordenar_candidatos(candidatos)
+    
     segundo_turno = True
     
-    for i, candidato in enumerate(candidatos, start=1):
-        if Decimal(candidato.votos_apurados) >= ((Decimal(municipio.votos_validos) / 2) + 1):
+    for candidato in candidatos:
+        if candidato['situacao'] == "Eleito":
             segundo_turno = False
             break
         else:
             segundo_turno = True
+            break
     
     yt_copy = gerar_yt_copy(municipio, candidatos, segundo_turno)
     return render_template('copy.html', yt_copy=yt_copy, municipio = municipio)
@@ -412,18 +421,18 @@ def gerar_yt_copy(municipio, candidatos, segundo_turno=True):
     candidatos_tags = []
     
     for candidato in candidatos:
-        candidatos_tags.append(f"{candidato.nome_urna.title()},{candidato.partido},")
+        candidatos_tags.append(f"{candidato['nome_urna'].title()},{candidato['partido']},")
     
     candidatos_tags = ', '.join(candidatos_tags)
     
     tags = candidatos_tags + tags
     
     if segundo_turno:
-        descricao = f"""O segundo turno das Eleições 2024 para prefeitura de {municipio.nome.title()}/{municipio.UF} será disputado entre {candidatos[0].nome_urna.title()} ({candidatos[0].partido}) e {candidatos[1].nome_urna.title()} ({candidatos[1].partido}). O Tribunal Superior Eleitoral (TSE) concluiu a totalização dos votos do primeiro turno às {municipio.ht} {dias_da_semana[municipio.dt.weekday()]}, {municipio.dt.day}.
+        descricao = f"""O segundo turno das Eleições 2024 para prefeitura de {municipio.nome.title()}/{municipio.UF} será disputado entre {candidatos[0]['nome_urna'].title()} ({candidatos[0]['partido']}) e {candidatos[1]['nome_urna'].title()} ({candidatos[1]['partido']}). O Tribunal Superior Eleitoral (TSE) concluiu a totalização dos votos do primeiro turno às {municipio.ht} {dias_da_semana[municipio.dt.weekday()]}, {municipio.dt.day}.
 
-Segundo o TSE, com {municipio.percentual_votos_validos}% dos votos válidos e {municipio.percentual_secoes_totalizadas}% das seções apuradas, {candidatos[0].nome_urna.title()} teve {candidatos[0].percentual_votos_apurados}% ({candidatos[0].votos_apurados} votos válidos) e {candidatos[1].nome_urna.title()}, {candidatos[1].percentual_votos_apurados}% ({candidatos[1].votos_apurados} votos válidos).
+Segundo o TSE, com {municipio.percentual_votos_validos}% dos votos válidos e {municipio.percentual_secoes_totalizadas}% das seções apuradas, {candidatos[0]['nome_urna'].title()} teve {candidatos[0]['percentual_votos_apurados']}% ({candidatos[0]['votos_apurados']:,} votos válidos) e {candidatos[1]['nome_urna'].title()}, {candidatos[1]['percentual_votos_apurados']}% ({candidatos[1]['votos_apurados']:,} votos válidos).
     
-Os eleitores do município voltarão às urnas - no dia 27 de outubro, das 8h às 17h (horário de Brasília), para decidir quem comandará a prefeitura pelos próximos quatros anos.
+Os eleitores do município voltarão às urnas no dia 27 de outubro, das 8h às 17h (horário de Brasília), para decidir quem comandará a prefeitura pelos próximos quatros anos.
     
 #Eleições2024 #{municipio.nome} #Apuração
     
@@ -444,7 +453,7 @@ WhatsApp ▸ https://whatsapp.com/channel/0029VaDGPXE0rGiN2XvTl03k
             
         
     else:
-        descricao = f"""Com {candidatos[0].percentual_votos_apurados}% dos votos válidos, {candidatos[0].nome_urna} ({candidatos[0].partido}) se elegeu à prefeitura de {municipio.nome}/{municipio.UF} no primeiro turno das Eleições 2024. O Tribunal Superior Eleitoral (TSE) concluiu a totalização dos votos do primeiro turno às {municipio.ht.strptime("%Hh%m")} {dias_da_semana[datetime.datetime.now().weekday()]}, {datetime.datetime.now().day}.   
+        descricao = f"""Com {candidatos[0]['percentual_votos_apurados']}% dos votos válidos, {candidatos[0]['nome_urna'].title()} ({candidatos[0]['partido']}) se elegeu à prefeitura de {municipio.nome}/{municipio.UF} no primeiro turno das Eleições 2024. O Tribunal Superior Eleitoral (TSE) concluiu a totalização dos votos do primeiro turno às {municipio.ht} {dias_da_semana[datetime.datetime.now().weekday()]}, {datetime.datetime.now().day}.   
             
 Aviso: este conteúdo foi gerado automaticamente com base nos dados oficiais do Tribunal Superior Eleitoral (TSE). Informações como nomes, siglas, porcentagens de votos e data do pleito são atualizadas para refletir com precisão os resultados em diferentes municípios. Além disso, o percentual de cada candidato leva em conta os votos de todos os candidatos concorrentes, independente da situação jurídica. Consulte a situação dos candidatos no site do TSE
             
@@ -470,3 +479,26 @@ WhatsApp ▸ https://whatsapp.com/channel/0029VaDGPXE0rGiN2XvTl03k
     }
     
     return yt_copy
+
+
+def ordenar_candidatos(candidados):
+    candidatos_ordendados = []
+    for candidato in candidados:
+        item = {
+            "nro": candidato.nro,
+            "seq": candidato.seq,
+            "sqcand": candidato.sqcand,
+            "situacao": candidato.situacao,
+            "destinacao_voto": candidato.destinacao_voto,
+            "codigo_municipio": candidato.codigo_municipio,
+            "nome_urna": candidato.nome_urna,
+            "nome": candidato.nome,
+            "foto": candidato.foto,
+            "partido": candidato.partido,
+            "votos_apurados": Decimal(str(candidato.votos_apurados).replace(".",'')),
+            "percentual_votos_apurados": candidato.percentual_votos_apurados
+        }
+        candidatos_ordendados.append(item)
+    # ordenar lista de candidatos por votos_apurados
+    candidatos_ordendados = sorted(candidatos_ordendados, key=lambda x: x['votos_apurados'], reverse=True)
+    return candidatos_ordendados

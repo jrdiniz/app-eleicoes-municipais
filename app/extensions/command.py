@@ -147,7 +147,7 @@ def init_app(app):
             {'nome': 'Taboão da Serra', 'uf': 'SP'},
             {'nome': 'Taubaté', 'uf': 'SP'},
             {'nome': 'Palmas', 'uf': 'TO'},
-            {'nome': 'Parauapebas ', 'uf': 'PA'}
+            {'nome': 'Parauapebas', 'uf': 'PA'}
         ]
         
         url = "https://p1-cloud.trrsf.com/api/eleicoes2024-api/resultados"
