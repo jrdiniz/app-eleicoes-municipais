@@ -75,8 +75,7 @@ def criar_video(codigo_municipio):
             parameters[f"indicador2Turno"] = "100"
             parameters[f"turnoResultado"] = "Haverá segundo turno"
             segundo_turno = True
-            break
-    
+
     # Abstenções
     parameters[f"abstencaoPercentual"] = f"{municipio.percentual_abstencao} %"
     
