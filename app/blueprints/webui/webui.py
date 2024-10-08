@@ -328,11 +328,11 @@ def vmix():
                 'percentual_secoes_totalizadas':f"{municipio.percentual_secoes_totalizadas} %",
             }
             # Sort candidatos by percentual_votos_apurados in descending order
-            sorted_candidatos = sorted(municipio.candidatos, key=lambda c: c.percentual_votos_apurados, reverse=True)
-            for num, candidato in enumerate(sorted_candidatos, start=1):
-                item[f"candidato_{num}"] = candidato.nome_urna
-                item[f"candidato_{num}_partido"] = candidato.partido
-                item[f"candidato_{num}_percentual_votos"] = f"{candidato.percentual_votos_apurados}%"
+            candidatos = ordenar_candidatos(municipio.candidatos)
+            for num, candidato in enumerate(candidatos, start=1):
+                item[f"candidato_{num}"] = candidato['nome_urna'] 
+                item[f"candidato_{num}_partido"] = candidato['partido']
+                item[f"candidato_{num}_percentual_votos"] = f"{candidato['percentual_votos_apurados']}%"
             data.append(item)
     
     return jsonify(data)
